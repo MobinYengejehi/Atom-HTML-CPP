@@ -117,16 +117,16 @@ You can see an example from `Cmake` and `Visual Studio` with `Atom` if you [clic
 
 # Atom shared functions
 
-<a name="atom_sleep">Function name : atom_sleep </a>
+<a name="atom_sleep"><h3>Function name : atom_sleep</h3></a>
 
 `Definition:`
 ```cpp
 void atom_sleep(unsigned int ms);
 ```
 
-Description: This function yields the thread untill the specified time.
+`Description`: This function yields the thread untill the specified time.
 
-Example:
+`Example`:
 ```cpp
 #include <iostream>
 #include "Atom/Atom.h"
@@ -146,16 +146,16 @@ int main () {
 }
 ```
 
-<a name="atom_get_now">Function name : atom_get_now </a>
+<a name="atom_get_now"><h3>Function name : atom_get_now</h3></a>
 
 `Definition:`
 ```cpp
 ATOM_TICK atom_get_now();
 ```
 
-Description: This function gets the timestamp for current time.
+`Description`: This function gets the timestamp for current time.
 
-Example:
+`Example`:
 ```cpp
 #include <iostream>
 #include "Atom/Atom.h"
@@ -177,16 +177,16 @@ int main () {
 }
 ```
 
-<a name="atom_clear_console">Function name : atom_clear_console </a>
+<a name="atom_clear_console"><h3>Function name : atom_clear_console</h3></a>
 
 `Definition:`
 ```cpp
 void atom_clear_console();
 ```
 
-Description: This function clears the debug console.
+`Description`: This function clears the debug console.
 
-Example:
+`Example`:
 ```cpp
 #include <iostream>
 #include "Atom/Atom.h"
@@ -206,20 +206,20 @@ int main () {
 }
 ```
 
-<a name="atom_application_init">Function name : atom_application_init </a>
+<a name="atom_application_init"><h3>Function name : atom_application_init</h3></a>
 
 `Definition:`
 ```cpp
 void atom_application_init();
 ```
 
-Description: This function defines all Atom shared functions for cpp and javascript.
+`Description`: This function defines all Atom shared functions for cpp and javascript.
 
 `Note 1`: If you don't use this function you won't be able to use Atom library at all.
 
 `Note 2`: Use this function just once otherwise it will break your code
 
-Example:
+`Example`:
 ```cpp
 #include <iostream>
 #include "Atom/Atom.h"
@@ -231,18 +231,18 @@ int main () {
 }
 ```
 
-<a name="atom_get_main_script_path">Function name : atom_get_main_script_path </a>
+<a name="atom_get_main_script_path"><h3>Function name : atom_get_main_script_path</h3></a>
 
 `Definition:`
 ```cpp
 char* atom_get_main_script_path();
 ```
 
-Description: This function gets the current script path or url.
+`Description`: This function gets the current script path or url.
 
 `Note`: If you don't free the string returned from this function it will occupie all your memory blocks
 
-Example:
+`Example`:
 ```cpp
 #include <iostream>
 #include "Atom/Atom.h"
@@ -267,7 +267,7 @@ int main () {
 char* atom_get_worker_script_path();
 ```
 
-Description: This function gets the javascript code that application will use on threads.
+`Description`: This function gets the javascript code that application will use on threads.
 
 `Note`: Its better to use [AtomWorker.js]().
 
@@ -277,7 +277,7 @@ You can set the script path this way on your html content:
 <script src="app.js" atom_main atom_worker="AtomWorker.js"></script>
 ```
 
-Example:
+`Example`:
 ```cpp
 #include <iostream>
 #include "Atom/Atom.h"
