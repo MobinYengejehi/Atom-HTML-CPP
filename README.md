@@ -4,8 +4,6 @@ Atom is a library based on `C & CPP` that you can compile it to web assembly and
 
 This library is something similar to `React` that you can create your websites based on `C & CPP` with its help.
 
-[goto my function](#myf)
-
 # How to use `Atom`
 
 1. Download and install [Emscripten](https://emscripten.org/) (Its better you install emscripten on `C:\emsdk` and don't forget to add it to windows environment)
@@ -113,10 +111,6 @@ Note : Your `CMakeLists.txt` file should look like : (if you installed `Emscript
 
 You can see an example from `Cmake` and `Visual Studio` with `Atom` if you [click here]().
 
-<h1>salam chetori?</h1>
+# Atom shared functions
 
-<div style="width: 100px;height: 100px; background: red;"></div>
-
-<span>thsis is something small</span>
-
-<a name="myf">My Function is</a>
+<a name="atom_sleep">`atom_sleep`</a>
