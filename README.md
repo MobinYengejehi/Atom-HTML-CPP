@@ -59,6 +59,10 @@ emcc -lembind -s ASYNCIFY -s EXIT_RUNTIME=1 -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_ME
 3. Make sure you installed the `Emscripten SDK`
 4. Create a `Cmake Project` in visual studio
 5. Add `Emscripten Cmake Toolchain` to your cmake project which located on `[emscripten_sdk installed directory]/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake`
+6. Build your project
+7. Open the `out` folder
+8. You will see `.js` and `.js.map` files
+9. Create a HTML file and use them on it
 
 Note : Your `CMakeLists.txt` file should look like : (if you installed `Emscripten SDK` on `C:\emsdk`)
 
@@ -113,4 +117,180 @@ You can see an example from `Cmake` and `Visual Studio` with `Atom` if you [clic
 
 # Atom shared functions
 
-<a name="atom_sleep">`atom_sleep`</a>
+<a name="atom_sleep">Function name : atom_sleep </a>
+
+`Definition:`
+```cpp
+void atom_sleep(unsigned int ms);
+```
+
+Description: This function yields the thread untill the specified time.
+
+Example:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    std::cout << "start the program : " << std::endl;
+
+    int sleepforseconds = 5;
+
+    atom_sleep(sleepforseconds*1000);
+
+    std::cout << "after " << sleepforseconds << " seconds" << std::endl;
+
+    return NULL;
+}
+```
+
+<a name="atom_get_now">Function name : atom_get_now </a>
+
+`Definition:`
+```cpp
+ATOM_TICK atom_get_now();
+```
+
+Description: This function gets the timestamp for current time.
+
+Example:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    std::cout << "start the program : " << std::endl;
+
+    ATOM_TICK last = atom_get_now();
+
+    int sleepforseconds = 5;
+
+    atom_sleep(sleepforseconds*1000);
+
+    std::cout << ((atom_get_now() - last)/1000) << " seconds elpased!" << std::endl;
+
+    return NULL;
+}
+```
+
+<a name="atom_clear_console">Function name : atom_clear_console </a>
+
+`Definition:`
+```cpp
+void atom_clear_console();
+```
+
+Description: This function clears the debug console.
+
+Example:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    std::cout << "this is cpp web app !" << std::endl;
+
+    std::cout << "clear console after 10 seconds" << std::endl;
+    
+    atom_sleep(10000);
+
+    atom_clear_console();
+
+    return NULL;
+}
+```
+
+<a name="atom_application_init">Function name : atom_application_init </a>
+
+`Definition:`
+```cpp
+void atom_application_init();
+```
+
+Description: This function defines all Atom shared functions for cpp and javascript.
+
+`Note 1`: If you don't use this function you won't be able to use Atom library at all.
+
+`Note 2`: Use this function just once otherwise it will break your code
+
+Example:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+    std::cout << "start the program : " << std::endl;
+    return NULL;
+}
+```
+
+<a name="atom_get_main_script_path">Function name : atom_get_main_script_path </a>
+
+`Definition:`
+```cpp
+char* atom_get_main_script_path();
+```
+
+Description: This function gets the current script path or url.
+
+`Note`: If you don't free the string returned from this function it will occupie all your memory blocks
+
+Example:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    char* scriptPath = atom_get_main_script_path();
+
+    std::cout << "script path is : " << scriptPath << std::endl;
+
+    free((void*)scriptPath); // cleanup memory
+
+    return NULL;
+}
+```
+
+<a name="atom_get_worker_script_path">Function name : atom_get_worker_script_path </a>
+
+`Definition:`
+```cpp
+char* atom_get_worker_script_path();
+```
+
+Description: This function gets the javascript code that application will use on threads.
+
+`Note`: Its better to use [AtomWorker.js]().
+
+You can set the script path this way on your html content:
+
+```html
+<script src="app.js" atom_main atom_worker="AtomWorker.js"></script>
+```
+
+Example:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    char* scriptPath = atom_get_worker_script_path();
+    std::cout << "worker script path is : " << scriptPath << std::endl;
+
+    free((void*)scriptPath);
+
+    return NULL;
+}
+```
+
