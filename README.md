@@ -260,7 +260,7 @@ int main () {
 }
 ```
 
-<a name="atom_get_worker_script_path">Function name : atom_get_worker_script_path </a>
+<a name="atom_get_worker_script_path"></h2>Function name : atom_get_worker_script_path</h2></a>
 
 `Definition:`
 ```cpp
