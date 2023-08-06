@@ -4,7 +4,7 @@ Atom is a library based on `C & CPP` that you can compile it to web assembly and
 
 This library is something similar to `React` that you can create your websites based on `C & CPP` with its help.
 
-#<a name="myf">goto my function</a>
+[goto my function](#myf)
 
 # How to use `Atom`
 
@@ -119,4 +119,4 @@ You can see an example from `Cmake` and `Visual Studio` with `Atom` if you [clic
 
 <span>thsis is something small</span>
 
-[MyFunction](#myf)
+<a name="myf">My Function is</a>
