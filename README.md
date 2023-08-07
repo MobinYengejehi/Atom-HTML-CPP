@@ -1147,7 +1147,7 @@ int main () {
     if (atom_is_multi_thread_enabled()) {
         atom_fork("other_thread");
         
-        atom_wait_till_process_ready("other_thread");
+        atom_wait_till_process_be_ready("other_thread");
 
         ATOM_JS_VARIABLE object = ATOM_JS_VARAIBLE::object();
         object.set("name", "Jash");
