@@ -1,10 +1,15 @@
-# Atom `HTML Graphics` Library for `C & CPP`
+# Guidline
+
+🔵 [What is Atom](#what_is_atom)
+🔵 [How to use Atom](#how_to_use_atom)
+
+# <a name="what_is_atom">Atom `HTML Graphics` Library for `C & CPP`</a>
 
 Atom is a library based on `C & CPP` that you can compile it to web assembly and use it in browsers.
 
 This library is something similar to `React` that you can create your websites based on `C & CPP` with its help.
 
-# How to use `Atom`
+# <a name="how_to_use_atom">How to use `Atom`</a>
 
 1. Download and install [Emscripten](https://emscripten.org/) (Its better you install emscripten on `C:\emsdk` and don't forget to add it to windows environment)
 2. Create a directory
@@ -18,6 +23,8 @@ This library is something similar to `React` that you can create your websites b
 #include "Atom/Atom.h"
 
 int main() {
+    atom_init_application();
+
     char* processName = atom_get_process_name();
     
     std::cout << "process name is : " << processName << std::endl;
@@ -45,26 +52,27 @@ emcc -lembind -s ASYNCIFY -s EXIT_RUNTIME=1 -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_ME
 <html>
     <head></head>
     <body>
-        <script src="AtomHardwareAPI.js" atom_main></script>
+        <script src="app.js" atom_main></script>
     </body>
 </html>
 ```
 
 8. Open HTML file on your browser and you can see the preview.
 
-# How to use `Atom` in `Visual Studio`
+# <a name="how_to_use_atom_vs">How to use `Atom` in `Visual Studio`</a>
 
 1. Download and install [Visual Studio](https://visualstudio.microsoft.com/downloads/)
 2. Download and install `Cmake & Cmake Tools & Windows-Clang` from `Visual Studio` installer application
 3. Make sure you installed the `Emscripten SDK`
 4. Create a `Cmake Project` in visual studio
 5. Add `Emscripten Cmake Toolchain` to your cmake project which located on `[emscripten_sdk installed directory]/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake`
-6. Build your project
-7. Open the `out` folder
-8. You will see `.js` and `.js.map` files
-9. Create a HTML file and use them on it
+6. Add `Atom Library` to your project (Don't forget to add files to `CMakeLists.txt` file!)
+7. Build your project
+8. Open the `out` folder
+9. You will see `.js` and `.js.map` files
+10. Create a HTML file and use them on it
 
-Note : Your `CMakeLists.txt` file should look like : (if you installed `Emscripten SDK` on `C:\emsdk`)
+Note : Your `CMakeSettings.json` file should look like : (if you installed `Emscripten SDK` on `C:\emsdk`)
 
 ```json
 {
@@ -115,7 +123,164 @@ Note : Your `CMakeLists.txt` file should look like : (if you installed `Emscript
 
 You can see an example from `Cmake` and `Visual Studio` with `Atom` if you [click here]().
 
-# Atom shared functions
+# <a name="how_to_create_atom_component">How to create and use `Atom Components`</a>
+For creating `Atom Components` all you need is including `AtomMacros.h` header file and use it like the following example:
+
+```cpp
+#include "Atom/Atom.h"
+#include "Atom/AtomMacros.h"
+
+const std::string DefaultTitle = "atom app";
+
+AtomElement Title(const std::string& title) {
+    return Element { Node "h1", Id "app_title",
+        ([&title]() -> auto {
+            if (title.empty()) {
+                return TextContent DefaultTitle;
+            }
+            return TextContent title;
+        })()
+    };
+}
+
+AtomElement List(const size_t& itemCount) {
+    const size_t count = itemCount > 5 ? itemCount : 5;
+
+    return Element { Node "div", Class "list itemHolder",
+        ([&count]() -> auto {
+            AtomElementList items;
+            
+            for (size_t i = 0; i < count; i++) {
+                items.push_back(Element {
+                    Node "span",
+                    InnerHTML "im item number : ",
+                    InnerHTML std::to_string(i)
+                });
+            }
+
+            return items;
+        })()
+    };
+}
+
+AtomElement App() {
+    return Element { Node "div", Class "atom_app_container",
+        Title("this is simple atom application"),
+        List(15),
+        BreakLine,
+        Element { Node "h1",
+            TextConten "im footer!"
+        }
+    };
+}
+
+int main() {
+    atom_application_init();
+
+    AtomElement body = AtomGetDocumentBodyElement();
+
+    AtomElement app = App();
+
+    {
+        body += app;
+        // or :
+        body.AppendChild(app);
+    }
+
+    return NULL;
+}
+```
+
+To earn more information about this feature you can check out [AtomMacros.h]() file. 
+
+# <a name="how_to_create_atom_css_style">How to create and use `Atom Css StyleSheet`</a>
+
+For creating `Css StyleSheets` using `Atom` you just need to include `AtomStyleMacros.h` and `AtomCssPropertiesMacros.h` and use them like the following example:
+
+```cpp
+#include "Atom/Atom.h"
+#include "Atom/AtomStyleMacros.h"
+#include "Atom/AtomCssPropertiesMacros.h"
+
+AtomCssStyleProperties CssStyle() {
+    return CssStyleSheet {
+        Query(*) {
+            Margin = Css(0px),
+            Padding = Css(0px)
+        },
+        Query(body) {
+            Position = Css(absolute),
+            Left = "50%", // you can use strings too
+            Top = "50%",
+            Transform = Css(translate(-50%, -50%))
+        },
+        Query(body .atom_app_container) {
+            Width = Css(100%),
+            Height = Css(100%),
+            Background = Css(#ff00ff), // you can also use `CssProperty(background)`
+            CssProperty(position) = Css(absolute),
+            Animation = Css(container_animation 1s ease 0s infinite)
+        },
+        $KeyFrames(container_animation) {
+            Query(0%, 100%) {
+                CssProperty(transform) = Css(translateY(0px))
+            },
+            Query(50%) {
+                Transform = Css(translateY(100%))
+            }
+        }
+    }
+}
+
+int main() {
+    atom_application_init();
+
+    AtomElement head = AtomGetDocumentHeadElement();
+
+    AtomElement styleSheet = AtomCreateStyleElement(CssStyle());
+
+    head += styleSheet;
+
+    return NULL;
+}
+```
+
+To earn more information about this feature you can check out [AtomStyleMacros.h]() and [AtomCssPropertiesMacros.h]() files.
+
+# <a name="how_to_use_css_properties_for_atom_element">How to use `Css Properties` for `Atom Element` directly</a>
+
+`Example`:
+
+```cpp
+#include "Atom/Atom.h"
+#include "Atom/AtomMacros.h"
+#include "Atom/AtomCssPropertiesMacros.h"
+
+AtomElement App() {
+    return Element { Node "div", Class "atom_app"
+        Style {
+            Position = Css(absolute),
+            Width = Css(100px),
+            Height = Css(150px),
+            Left = Css(50%),
+            Top = Css(50%),
+            Transform = Css(translate(-50%, -50%))
+        },
+        InnerHTML "<h1>hi this is the app</h1>",
+        InnerHTML "<span>this is an span element</span>"
+    }
+}
+
+int main() {
+    atom_application_init();
+
+    AtomGetDocumentBodyElement() += App();
+
+    return NULL;
+}
+```
+
+# <a name="atom_shared_function">Atom shared functions</a>
 
 <a name="atom_sleep"><h3>Function name : atom_sleep</h3></a>
 
@@ -1156,6 +1321,1709 @@ int main () {
 
         atom_post_child_process("other_thread", object.as_handle());
     }
+
+    return NULL;
+}
+```
+
+<a name="atom_child_process_exists"><h3>Function name : atom_child_process_exists</h3></a>
+
+`Definition:`
+```cpp
+bool atom_child_process_exists(const char* processName);
+```
+
+`Description`: This function checks if child process exists or not.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    if (!atom_is_main_process()) {
+        return;
+    }
+
+    atom_fork("secondThread");
+
+    if (atom_child_process_exists("secondThread")) {
+        std::cout << "exists" << std::endl;
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_child_process_is_ready"><h3>Function name : atom_child_process_is_ready</h3></a>
+
+`Definition:`
+```cpp
+bool atom_child_process_is_ready(const char* processName);
+```
+
+`Description`: This function checks if scripts loaded in child process or not.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    if (!atom_is_main_process()) {
+        return;
+    }
+
+    atom_fork("secondThread");
+
+    if (atom_child_process_is_ready("secondThread")) {
+        std::cout << "exists" << std::endl;
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_wait_till_process_be_ready"><h3>Function name : atom_wait_till_process_be_ready</h3></a>
+
+`Definition:`
+```cpp
+void atom_wait_till_process_be_ready(const char* processName);
+```
+
+`Description`: This function suspends the current thread until the target process be ready.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    if (!atom_is_main_process()) {
+        return;
+    }
+
+    atom_fork("secondThread");
+
+    atom_wait_till_process_be_ready("secondThread");
+
+    if (atom_child_process_is_ready("secondThread")) {
+        std::cout << "exists" << std::endl;
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_terminate_child_process"><h3>Function name : atom_terminate_child_process</h3></a>
+
+`Definition:`
+```cpp
+void atom_terminate_child_process(const char* processName);
+```
+
+`Description`: This function terminates child process.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    if (!atom_is_main_process()) {
+        return;
+    }
+
+    atom_fork("secondThread");
+
+    atom_wait_till_process_be_ready("secondThread");
+
+    if (atom_child_process_exists("secondThread")) {
+        std::cout << "exists" << std::endl;
+    }
+
+    atom_terminate_child_process("secondThread");
+
+    return NULL;
+}
+```
+
+<a name="atom_loadstring_child_process"><h3>Function name : atom_loadstring_child_process</h3></a>
+
+`Definition:`
+```cpp
+ATOM_FUNCTION atom_loadstring_child_process(const char* processName, const char* javascriptCode);
+```
+
+`Description`: This function loads a javascript code in target process and returns a function that you can call that javascript code whenever you want.
+
+`Note`: Don't forget to free up `ATOM_FUNCTION` return data.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    const char* jsCode = 
+        "const x = arguments[0];"
+        "const y = arguments[1];"
+        "console.log('arguments are : ', { x, y })"
+        "return x + y;"
+    ;
+
+    typedef int (*JsFunction)(int, int);
+
+    JsFunction func = (JsFunction)atom_loadstring_child_process("main", jsCode);
+
+    std::cout << "data is : " << func(5, 15) << std::endl;
+
+    free((void*)func);
+
+    return NULL;
+}
+```
+
+<a name="atom_eval_child_process"><h3>Function name : atom_eval_child_process</h3></a>
+
+`Definition:`
+```cpp
+ATOM_JS_VARIABLE_HANDLE atom_eval_child_process(const char* processName, const char* javascriptCode);
+```
+
+`Description`: This function executes javascript code in target process.
+
+`Example`:
+```cpp
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    atom_eval_child_process("main", "console.log('hi this is in js');");
+
+    return NULL;
+}
+```
+
+<a name="atom_yield"><h3>Function name : atom_yield</h3></a>
+
+`Definition:`
+```cpp
+void atom_yield();
+```
+
+`Description`: This function suspends the current thread.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+    atom_resume("main");
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        std::cout << "second thread resumed this thread" << std::endl;
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_resume"><h3>Function name : atom_resume</h3></a>
+
+`Definition:`
+```cpp
+void atom_resume(const char* processName);
+```
+
+`Description`: This function resumes the target suspended thread.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+    atom_resume("main");
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        std::cout << "second thread resumed this thread" << std::endl;
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_function_pointer_exists"><h3>Function name : atom_function_pointer_exists</h3></a>
+
+`Definition:`
+```cpp
+bool atom_function_pointer_exists(ATOM_FUNCTION function);
+```
+
+`Description`: This function checks if current function exists in memory or not.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void myFunciton() {
+    std::cout << "this is my function" << std::endl;
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_function_pointer_exists((ATOM_FUNCTION)myFunction)) {
+        std::cout << "exists" << std::endl;
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_delete_function_pointer"><h3>Function name : atom_delete_function_pointer</h3></a>
+
+`Definition:`
+```cpp
+void atom_delete_function_pointer(ATOM_FUNCTION function);
+```
+
+`Description`: This function deletes function from memory.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void myFunc() {
+    std::cout << "this is my func" << std::endl;
+}
+
+int main () {
+    atom_application_init();
+
+    myFunc();
+
+    atom_delete_function_pointer((ATOM_FUNCTION)myFunc);
+
+    myFunc(); // error
+
+    return NULL;
+}
+```
+
+<a name="atom_register_shared_function"><h3>Function name : atom_register_shared_function</h3></a>
+
+`Definition:`
+```cpp
+void atom_register_shared_function(const char* name, ATOM_FUNCTION function, bool clearMemory);
+```
+
+`Description`: This function registers a function that you can use it in other processes.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    auto sFunction = [](int x, int y) -> void {
+        std::cout << "this is a shared function on SecondThread : " << (x + y) << std::endl;
+    };
+
+    atom_register_shared_function("shfunc", (ATOM_FUNCTION)sFunction, false);
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        if (!atom_shared_function_exists("shfunc")) {
+            return;
+        }
+
+        ATOM_SHARED_FUNCTION_TYPE(SharedFunction, int, int);
+
+        char* processName = atom_get_shared_function_process("shfunc");
+        std::cout << "getting function from : " << processName << std::endl;
+        free((void*)processName);
+
+        SharedFunction sFunction = (SharedFunction)atom_get_shared_function("shfunc");
+        if (sFunction) {
+            sFunction(5, 10);
+        }
+
+        free((void*)sFunction);
+
+        atom_remove_shared_function("shfunc");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_shared_function_exists"><h3>Function name : atom_shared_function_exists</h3></a>
+
+`Definition:`
+```cpp
+bool atom_shared_function_exists(const char* name);
+```
+
+`Description`: This function checks if shared function exists or not.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    auto sFunction = [](int x, int y) -> void {
+        std::cout << "this is a shared function on SecondThread : " << (x + y) << std::endl;
+    };
+
+    atom_register_shared_function("shfunc", (ATOM_FUNCTION)sFunction, false);
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        if (!atom_shared_function_exists("shfunc")) {
+            return;
+        }
+
+        ATOM_SHARED_FUNCTION_TYPE(SharedFunction, int, int);
+
+        char* processName = atom_get_shared_function_process("shfunc");
+        std::cout << "getting function from : " << processName << std::endl;
+        free((void*)processName);
+
+        SharedFunction sFunction = (SharedFunction)atom_get_shared_function("shfunc");
+        if (sFunction) {
+            sFunction(5, 10);
+        }
+
+        free((void*)sFunction);
+
+        atom_remove_shared_function("shfunc");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_remove_shared_function"><h3>Function name : atom_remove_shared_function</h3></a>
+
+`Definition:`
+```cpp
+void atom_remove_shared_function(const char* name);
+```
+
+`Description`: This function removes registered shared function.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    auto sFunction = [](int x, int y) -> void {
+        std::cout << "this is a shared function on SecondThread : " << (x + y) << std::endl;
+    };
+
+    atom_register_shared_function("shfunc", (ATOM_FUNCTION)sFunction, false);
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        if (!atom_shared_function_exists("shfunc")) {
+            return;
+        }
+
+        ATOM_SHARED_FUNCTION_TYPE(SharedFunction, int, int);
+
+        char* processName = atom_get_shared_function_process("shfunc");
+        std::cout << "getting function from : " << processName << std::endl;
+        free((void*)processName);
+
+        SharedFunction sFunction = (SharedFunction)atom_get_shared_function("shfunc");
+        if (sFunction) {
+            sFunction(5, 10);
+        }
+
+        free((void*)sFunction);
+
+        atom_remove_shared_function("shfunc");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_get_shared_function_process"><h3>Function name : atom_get_shared_function_process</h3></a>
+
+`Definition:`
+```cpp
+char* atom_register_shared_function(const char* name);
+```
+
+`Description`: This function gets the process name which registered the shared function.
+
+`Note`: Don't forget to free up `char*` returned data.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    auto sFunction = [](int x, int y) -> void {
+        std::cout << "this is a shared function on SecondThread : " << (x + y) << std::endl;
+    };
+
+    atom_register_shared_function("shfunc", (ATOM_FUNCTION)sFunction, false);
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        if (!atom_shared_function_exists("shfunc")) {
+            return;
+        }
+
+        ATOM_SHARED_FUNCTION_TYPE(SharedFunction, int, int);
+
+        char* processName = atom_get_shared_function_process("shfunc");
+        std::cout << "getting function from : " << processName << std::endl;
+        free((void*)processName);
+
+        SharedFunction sFunction = (SharedFunction)atom_get_shared_function("shfunc");
+        if (sFunction) {
+            sFunction(5, 10);
+        }
+
+        free((void*)sFunction);
+
+        atom_remove_shared_function("shfunc");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_get_shared_function"><h3>Function name : atom_get_shared_function</h3></a>
+
+`Definition:`
+```cpp
+ATOM_FUNCTION atom_register_shared_function(const char* name);
+```
+
+`Description`: This function gets the registered shared function.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    auto sFunction = [](int x, int y) -> void {
+        std::cout << "this is a shared function on SecondThread : " << (x + y) << std::endl;
+    };
+
+    atom_register_shared_function("shfunc", (ATOM_FUNCTION)sFunction, false);
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        if (!atom_shared_function_exists("shfunc")) {
+            return;
+        }
+
+        ATOM_SHARED_FUNCTION_TYPE(SharedFunction, int, int);
+
+        char* processName = atom_get_shared_function_process("shfunc");
+        std::cout << "getting function from : " << processName << std::endl;
+        free((void*)processName);
+
+        SharedFunction sFunction = (SharedFunction)atom_get_shared_function("shfunc");
+        if (sFunction) {
+            sFunction(5, 10);
+        }
+
+        free((void*)sFunction);
+
+        atom_remove_shared_function("shfunc");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_allocate_shared_memory"><h3>Function name : atom_allocate_shared_memory</h3></a>
+
+`Definition:`
+```cpp
+void atom_allocate_shared_memory(const char* name, size_t size_of_bytes);
+```
+
+`Description`: This function allocates shared memory for using between processes.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    if (!atom_shared_memory_exists("my_data")) {
+        atom_resume("main");
+        atom_exit(NULL);
+        return;
+    }
+
+    const size_t dataSize = atom_get_shared_memory_size("my_data");
+
+    ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+    const char* data = (char*)sharedMem;
+
+    std::cout << "shared data is : " << data << std::endl;
+
+    memset(data, 'f', dataSize);
+
+    atom_update_main_shared_memory("my_data");
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        const char data[] = "hi this is my shared data!";
+
+        const size_t size = strlen(data);
+
+        atom_allocate_shared_memory("my_data", size);
+
+        ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+        memcpy(sharedMem, data, size);
+
+        atom_update_shared_memory("my_data", NULL);
+
+        ATOM_POINTER_REFERENCE pointerRef = atom_get_shared_memory_pointer("my_data");
+        std::cout << "shared memory pointer ref is : " << pointerRef << std::endl;
+        
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        sharedMem = atom_get_shared_memory("my_data");
+        const char* updatedData = (char*)sharedMem;
+
+        std::cout << "updated mem is : " << updatedData << std::endl;
+
+        atom_free_shared_memory("my_data");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_shared_memory_exists"><h3>Function name : atom_shared_memory_exists</h3></a>
+
+`Definition:`
+```cpp
+bool atom_shared_memory_exists(const char* name);
+```
+
+`Description`: This function checks if target shared memory exists or not.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    if (!atom_shared_memory_exists("my_data")) {
+        atom_resume("main");
+        atom_exit(NULL);
+        return;
+    }
+
+    const size_t dataSize = atom_get_shared_memory_size("my_data");
+
+    ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+    const char* data = (char*)sharedMem;
+
+    std::cout << "shared data is : " << data << std::endl;
+
+    memset(data, 'f', dataSize);
+
+    atom_update_main_shared_memory("my_data");
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        const char data[] = "hi this is my shared data!";
+
+        const size_t size = strlen(data);
+
+        atom_allocate_shared_memory("my_data", size);
+
+        ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+        memcpy(sharedMem, data, size);
+
+        atom_update_shared_memory("my_data", NULL);
+
+        ATOM_POINTER_REFERENCE pointerRef = atom_get_shared_memory_pointer("my_data");
+        std::cout << "shared memory pointer ref is : " << pointerRef << std::endl;
+        
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        sharedMem = atom_get_shared_memory("my_data");
+        const char* updatedData = (char*)sharedMem;
+
+        std::cout << "updated mem is : " << updatedData << std::endl;
+
+        atom_free_shared_memory("my_data");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_get_shared_memory_pointer"><h3>Function name : atom_get_shared_memory_pointer</h3></a>
+
+`Definition:`
+```cpp
+ATOM_POINTER_REFERENCE atom_get_shared_memory_pointer(const char* name);
+```
+
+`Description`: This function gets the memory address of target shared memory.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    if (!atom_shared_memory_exists("my_data")) {
+        atom_resume("main");
+        atom_exit(NULL);
+        return;
+    }
+
+    const size_t dataSize = atom_get_shared_memory_size("my_data");
+
+    ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+    const char* data = (char*)sharedMem;
+
+    std::cout << "shared data is : " << data << std::endl;
+
+    memset(data, 'f', dataSize);
+
+    atom_update_main_shared_memory("my_data");
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        const char data[] = "hi this is my shared data!";
+
+        const size_t size = strlen(data);
+
+        atom_allocate_shared_memory("my_data", size);
+
+        ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+        memcpy(sharedMem, data, size);
+
+        atom_update_shared_memory("my_data", NULL);
+
+        ATOM_POINTER_REFERENCE pointerRef = atom_get_shared_memory_pointer("my_data");
+        std::cout << "shared memory pointer ref is : " << pointerRef << std::endl;
+        
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        sharedMem = atom_get_shared_memory("my_data");
+        const char* updatedData = (char*)sharedMem;
+
+        std::cout << "updated mem is : " << updatedData << std::endl;
+
+        atom_free_shared_memory("my_data");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_get_shared_memory_size"><h3>Function name : atom_get_shared_memory_size</h3></a>
+
+`Definition:`
+```cpp
+size_t atom_get_shared_memory_size(const char* name);
+```
+
+`Description`: This function gets the size of bytes for target shared memory.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    if (!atom_shared_memory_exists("my_data")) {
+        atom_resume("main");
+        atom_exit(NULL);
+        return;
+    }
+
+    const size_t dataSize = atom_get_shared_memory_size("my_data");
+
+    ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+    const char* data = (char*)sharedMem;
+
+    std::cout << "shared data is : " << data << std::endl;
+
+    memset(data, 'f', dataSize);
+
+    atom_update_main_shared_memory("my_data");
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        const char data[] = "hi this is my shared data!";
+
+        const size_t size = strlen(data);
+
+        atom_allocate_shared_memory("my_data", size);
+
+        ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+        memcpy(sharedMem, data, size);
+
+        atom_update_shared_memory("my_data", NULL);
+
+        ATOM_POINTER_REFERENCE pointerRef = atom_get_shared_memory_pointer("my_data");
+        std::cout << "shared memory pointer ref is : " << pointerRef << std::endl;
+        
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        sharedMem = atom_get_shared_memory("my_data");
+        const char* updatedData = (char*)sharedMem;
+
+        std::cout << "updated mem is : " << updatedData << std::endl;
+
+        atom_free_shared_memory("my_data");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_free_shared_memory"><h3>Function name : atom_free_shared_memory</h3></a>
+
+`Definition:`
+```cpp
+void atom_free_shared_memory(const char* name);
+```
+
+`Description`: This function deletes shared memory bytes from memory.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    if (!atom_shared_memory_exists("my_data")) {
+        atom_resume("main");
+        atom_exit(NULL);
+        return;
+    }
+
+    const size_t dataSize = atom_get_shared_memory_size("my_data");
+
+    ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+    const char* data = (char*)sharedMem;
+
+    std::cout << "shared data is : " << data << std::endl;
+
+    memset(data, 'f', dataSize);
+
+    atom_update_main_shared_memory("my_data");
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        const char data[] = "hi this is my shared data!";
+
+        const size_t size = strlen(data);
+
+        atom_allocate_shared_memory("my_data", size);
+
+        ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+        memcpy(sharedMem, data, size);
+
+        atom_update_shared_memory("my_data", NULL);
+
+        ATOM_POINTER_REFERENCE pointerRef = atom_get_shared_memory_pointer("my_data");
+        std::cout << "shared memory pointer ref is : " << pointerRef << std::endl;
+        
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        sharedMem = atom_get_shared_memory("my_data");
+        const char* updatedData = (char*)sharedMem;
+
+        std::cout << "updated mem is : " << updatedData << std::endl;
+
+        atom_free_shared_memory("my_data");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_get_shared_memory"><h3>Function name : atom_get_shared_memory</h3></a>
+
+`Definition:`
+```cpp
+ATOM_POINTER atom_get_shared_memory(const char* name);
+```
+
+`Description`: This function gets the shared memory bytes.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    if (!atom_shared_memory_exists("my_data")) {
+        atom_resume("main");
+        atom_exit(NULL);
+        return;
+    }
+
+    const size_t dataSize = atom_get_shared_memory_size("my_data");
+
+    ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+    const char* data = (char*)sharedMem;
+
+    std::cout << "shared data is : " << data << std::endl;
+
+    memset(data, 'f', dataSize);
+
+    atom_update_main_shared_memory("my_data");
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        const char data[] = "hi this is my shared data!";
+
+        const size_t size = strlen(data);
+
+        atom_allocate_shared_memory("my_data", size);
+
+        ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+        memcpy(sharedMem, data, size);
+
+        atom_update_shared_memory("my_data", NULL);
+
+        ATOM_POINTER_REFERENCE pointerRef = atom_get_shared_memory_pointer("my_data");
+        std::cout << "shared memory pointer ref is : " << pointerRef << std::endl;
+        
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        sharedMem = atom_get_shared_memory("my_data");
+        const char* updatedData = (char*)sharedMem;
+
+        std::cout << "updated mem is : " << updatedData << std::endl;
+
+        atom_free_shared_memory("my_data");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_update_shared_memory"><h3>Function name : atom_update_shared_memory</h3></a>
+
+`Definition:`
+```cpp
+void atom_update_shared_memory(const char* name, const char* processName);
+```
+
+`Description`: This function forces the target process to get new shared memory bytes.
+
+`Note`: If processName be `NULL`, it will force all processes to update their bytes;
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    if (!atom_shared_memory_exists("my_data")) {
+        atom_resume("main");
+        atom_exit(NULL);
+        return;
+    }
+
+    const size_t dataSize = atom_get_shared_memory_size("my_data");
+
+    ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+    const char* data = (char*)sharedMem;
+
+    std::cout << "shared data is : " << data << std::endl;
+
+    memset(data, 'f', dataSize);
+
+    atom_update_main_shared_memory("my_data");
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        const char data[] = "hi this is my shared data!";
+
+        const size_t size = strlen(data);
+
+        atom_allocate_shared_memory("my_data", size);
+
+        ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+        memcpy(sharedMem, data, size);
+
+        atom_update_shared_memory("my_data", NULL);
+
+        ATOM_POINTER_REFERENCE pointerRef = atom_get_shared_memory_pointer("my_data");
+        std::cout << "shared memory pointer ref is : " << pointerRef << std::endl;
+        
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        sharedMem = atom_get_shared_memory("my_data");
+        const char* updatedData = (char*)sharedMem;
+
+        std::cout << "updated mem is : " << updatedData << std::endl;
+
+        atom_free_shared_memory("my_data");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_update_main_shared_memory"><h3>Function name : atom_update_main_shared_memory</h3></a>
+
+`Definition:`
+```cpp
+void atom_update_main_shared_memory(const char* name);
+```
+
+`Description`: This function updates shared memory bytes on main thread.
+
+`Note`: This function only works on child processes and you can't use it on main process.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void SecondThread() {
+    std::cout << "this is second thread" << std::endl;
+
+    if (!atom_shared_memory_exists("my_data")) {
+        atom_resume("main");
+        atom_exit(NULL);
+        return;
+    }
+
+    const size_t dataSize = atom_get_shared_memory_size("my_data");
+
+    ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+    const char* data = (char*)sharedMem;
+
+    std::cout << "shared data is : " << data << std::endl;
+
+    memset(data, 'f', dataSize);
+
+    atom_update_main_shared_memory("my_data");
+
+    atom_resume("main");
+
+    atom_exit(NULL);
+}
+
+int main () {
+    atom_application_init();
+
+    if (atom_is_main_process()) {
+        const char data[] = "hi this is my shared data!";
+
+        const size_t size = strlen(data);
+
+        atom_allocate_shared_memory("my_data", size);
+
+        ATOM_POINTER sharedMem = atom_get_shared_memory("my_data");
+        memcpy(sharedMem, data, size);
+
+        atom_update_shared_memory("my_data", NULL);
+
+        ATOM_POINTER_REFERENCE pointerRef = atom_get_shared_memory_pointer("my_data");
+        std::cout << "shared memory pointer ref is : " << pointerRef << std::endl;
+        
+        atom_fork("secondThread");
+
+        atom_yield();
+
+        sharedMem = atom_get_shared_memory("my_data");
+        const char* updatedData = (char*)sharedMem;
+
+        std::cout << "updated mem is : " << updatedData << std::endl;
+
+        atom_free_shared_memory("my_data");
+    }else{
+        SecondThread();
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_get_pointer_from_reference"><h3>Function name : atom_get_pointer_from_reference</h3></a>
+
+`Definition:`
+```cpp
+ATOM_POINTER atom_get_pointer_from_reference(ATOM_POINTER_REFERENCE pointerRef);
+```
+
+`Description`: This function gets the memory pointer from memory address.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    ATOM_POINTER ptr = malloc(0xfff);
+
+    ATOM_POINTER_REFERENCE pAddress = atom_get_pointer_reference(ptr);
+    std::cout << "memory address is : " << pAddress << std::endl;
+
+    ATOM_POINTER ptr2 = atom_get_pointer_from_reference(pAddress);
+    
+    if (ptr == ptr2) {
+        std::cout << "both are the same pointer" << std::endl;
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_get_pointer_reference"><h3>Function name : atom_get_pointer_reference</h3></a>
+
+`Definition:`
+```cpp
+ATOM_POINTER_REFERENCE atom_get_pointer_reference(ATOM_POINTER pointer);
+```
+
+`Description`: This function gets the pointer from memory address.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    ATOM_POINTER ptr = malloc(0xfff);
+
+    ATOM_POINTER_REFERENCE pAddress = atom_get_pointer_reference(ptr);
+    std::cout << "memory address is : " << pAddress << std::endl;
+
+    ATOM_POINTER ptr2 = atom_get_pointer_from_reference(pAddress);
+    
+    if (ptr == ptr2) {
+        std::cout << "both are the same pointer" << std::endl;
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_request_animation_frame"><h3>Function name : atom_request_animation_frame</h3></a>
+
+`Definition:`
+```cpp
+ATOM_ANIMATION_FRAME atom_get_pointer_from_reference(ATOM_ANIMATION_FRAME_HANDLER handler, ATOM_POINTER data);
+```
+
+`Description`: This function creates an animation frame.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void Animation(ATOM_TICK, ATOM_POINTER) {
+    std::cout << "animation frame!!" << std::endl;
+}
+
+int main () {
+    atom_application_init();
+
+    ATOM_ANIMATION_FRAME animation = atom_request_animation_frame(Animation, NULL);
+
+    if (atom_exists_animation_frame(animation)) {
+        atom_sleep(5000);
+
+        atom_cancel_animation_frame(animation);
+    }
+
+    ATOM_ANIMATION_FRAME_HANDLER handler = atom_get_animation_frame_handler(animation);
+
+    if (handler == Animation) {
+        std::cout << "both are the same thing" << std::endl;
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_exists_animation_frame"><h3>Function name : atom_exist_animation_frame</h3></a>
+
+`Definition:`
+```cpp
+bool atom_exists_animation_frame(ATOM_ANIMATION_FRAME animationID);
+```
+
+`Description`: This function checks if animation frame exists or not.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void Animation(ATOM_TICK, ATOM_POINTER) {
+    std::cout << "animation frame!!" << std::endl;
+}
+
+int main () {
+    atom_application_init();
+
+    ATOM_ANIMATION_FRAME animation = atom_request_animation_frame(Animation, NULL);
+
+    if (atom_exists_animation_frame(animation)) {
+        atom_sleep(5000);
+
+        atom_cancel_animation_frame(animation);
+    }
+
+    ATOM_ANIMATION_FRAME_HANDLER handler = atom_get_animation_frame_handler(animation);
+
+    if (handler == Animation) {
+        std::cout << "both are the same thing" << std::endl;
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_cancel_animation_frame"><h3>Function name : atom_cancel_animation_frame</h3></a>
+
+`Definition:`
+```cpp
+void atom_cancel_animation_frame(ATOM_ANIMATION_FRAME animationID);
+```
+
+`Description`: This function cancels animation frame.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void Animation(ATOM_TICK, ATOM_POINTER) {
+    std::cout << "animation frame!!" << std::endl;
+}
+
+int main () {
+    atom_application_init();
+
+    ATOM_ANIMATION_FRAME animation = atom_request_animation_frame(Animation, NULL);
+
+    if (atom_exists_animation_frame(animation)) {
+        atom_sleep(5000);
+
+        atom_cancel_animation_frame(animation);
+    }
+
+    ATOM_ANIMATION_FRAME_HANDLER handler = atom_get_animation_frame_handler(animation);
+
+    if (handler == Animation) {
+        std::cout << "both are the same thing" << std::endl;
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_get_animation_frame_handler"><h3>Function name : atom_get_animation_frame_handler</h3></a>
+
+`Definition:`
+```cpp
+ATOM_ANIMATION_FRAME_HANDLER atom_get_animation_frame_handler(ATOM_ANIMATION_FRAME animationID);
+```
+
+`Description`: This function gets the animation handler.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void Animation(ATOM_TICK, ATOM_POINTER) {
+    std::cout << "animation frame!!" << std::endl;
+}
+
+int main () {
+    atom_application_init();
+
+    ATOM_ANIMATION_FRAME animation = atom_request_animation_frame(Animation, NULL);
+
+    if (atom_exists_animation_frame(animation)) {
+        atom_sleep(5000);
+
+        atom_cancel_animation_frame(animation);
+    }
+
+    ATOM_ANIMATION_FRAME_HANDLER handler = atom_get_animation_frame_handler(animation);
+
+    if (handler == Animation) {
+        std::cout << "both are the same thing" << std::endl;
+    }
+
+    return NULL;
+}
+```
+
+<a name="atom_query_selector"><h3>Function name : atom_query_selector</h3></a>
+
+`Definition:`
+```cpp
+ATOM_ELEMENT_REFERENCE atom_query_selector([ATOM_ELEMENT_REFERENCE parent,] const char* query);
+```
+
+`Description`: This function selects element with css query.
+
+`Note`: This function create a reference for the target element, then you must use [atom_free_element](#atom_free_element) function to delete the reference.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    ATOM_ELEMENT_REFERENCE body = atom_query_selector("body");
+
+    ATOM_ELEMENT_REFERENCE header = atom_query_selector(body, "h1");
+
+    std::cout << "body is : " << body << " | and header is : " << header << std::endl;
+
+    atom_free_element(header);
+    atom_free_element(body);
+
+    return NULL;
+}
+```
+
+<a name="atom_query_selector_all"><h3>Function name : atom_query_selector_all</h3></a>
+
+`Definition:`
+```cpp
+ATOM_ELEMENT_REFERENCE_LIST atom_query_selector_all([ATOM_ELEMENT_REFERENCE parent,] const char* query);
+```
+
+`Description`: This function selects all elements with css query.
+
+`Note`: This function creates a list of references for selected elements, then you must use [atom_free_element_lsit](#atom_free_element_list) function to delete the references.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    ATOM_ELEMENT_REFERENCE body = atom_query_selector("body");
+
+    ATOM_ELEMENT_REFERENCE_LIST header = atom_query_selector_all(body, "h1");
+
+    size_t headersCount = header.size();
+
+    std::cout << "body has " << headersCount << " headers" << std::endl;
+
+    atom_free_element_list(header);
+    atom_free_element(body);
+
+    return NULL;
+}
+```
+
+<a name="atom_free_element_list"><h3>Function name : atom_free_element_list</h3></a>
+
+`Definition:`
+```cpp
+void atom_free_element_list(ATOM_ELEMENT_REFERENCE_LIST elementList);
+```
+
+`Description`: This function deletes all element references inside a list.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    ATOM_ELEMENT_REFERENCE body = atom_query_selector("body");
+
+    ATOM_ELEMENT_REFERENCE_LIST header = atom_query_selector_all(body, "h1");
+
+    std::cout << "body is : " << body << " | and header is : " << header << std::endl;
+
+    atom_free_element_list(header);
+    atom_free_element(body);
+
+    return NULL;
+}
+```
+
+<a name="atom_register_function"><h3>Function name : atom_register_function</h3></a>
+
+`Definition:`
+```cpp
+void atom_register_function(const char* name, ATOM_FUNCTION function);
+```
+
+`Description`: This function registeres a cpp function in memory that you can use it in both javascript and cpp.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    atom_register_function("myf", []() {
+        std::cout << "hi this is myf" << std::endl;
+    });
+
+    return NULL;
+}
+```
+
+<a name="atom_generate_random_key"><h3>Function name : atom_generate_random_key</h3></a>
+
+`Definition:`
+```cpp
+char* atom_generate_random_key(const int& characterCount);
+```
+
+`Description`: This function generates a random key.
+
+`Note`: Don't forget to free up `char*` returned data.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    char* randomKey = atom_generate_random_key(16);
+
+    std::cout << "random key is : " << randomKey << std::endl;
+
+    free((void*)randomKey);
+
+    return NULL;
+}
+```
+
+<a name="atom_get_element_bounding_box"><h3>Function name : atom_get_element_bounding_box</h3></a>
+
+`Definition:`
+```cpp
+ATOM_BOUNDING_BOX atom_get_element_bounding_box(ATOM_ELEMENT_REFERENCE element);
+```
+
+`Description`: This function gets client bounding rect of a HTML element.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    ATOM_ELEMENT_REFERENCE body = atom_query_selector("body");
+
+    ATOM_ELEMENT_REFERENCE header = atom_query_selector(body, "h1");
+
+    ATOM_BOUNDING_BOX rect = atom_get_element_bounding_box(header);
+
+    std::cout << "header position : " << rect.x << " | " << rect.y << std::endl;
+
+    atom_free_element(header);
+    atom_free_element(body);
+
+    return NULL;
+}
+```
+
+<a name="atom_add_event_listener"><h3>Function name : atom_add_event_listener</h3></a>
+
+`Definition:`
+```cpp
+void atom_add_event_listener([ATOM_ELEMENT_REFERENCE element,] const char* eventName, ATOM_EVENT_HANDLER handler);
+```
+
+`Description`: This function adds an event listener for an element.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+void OnClickEvent(ATOM_EVENT eventHandle) {
+    ATOM_JS_VARIABLE e = ATOM_EVENT_VARIABLE(eventHandle);
+
+    int x = e["clientX"] ATOM_AS_INT;
+    int y = e["clientY"] ATOM_AS_INT;
+
+    std::cout << "clicked on : " << x << " | " << y << std::endl;
+}
+
+int main () {
+    atom_application_init();
+
+    ATOM_ELEMENT_REFERENCE body = atom_query_selector("body");
+
+    atom_add_event_listener(body, "click", OnClickEvent);
+
+    atom_free_element(body);
+
+    return NULL;
+}
+```
+
+<a name="atom_exit"><h3>Function name : atom_exit</h3></a>
+
+`Definition:`
+```cpp
+void atom_exit(int status);
+```
+
+`Description`: This function quit from application.
+
+`Example`:
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+int main () {
+    atom_application_init();
+
+    std::cout << "atom application !" << std::endl;
+
+    atom_exit(NULL);
 
     return NULL;
 }
