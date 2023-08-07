@@ -355,7 +355,7 @@ int main() {
 }
 ```
 
-To earn more information about this feature you can check out [AtomMacros.h]() file. 
+To earn more information about this feature you can check out [AtomMacros.h](https://github.com/MobinYengejehi/Atom-HTML-CPP/blob/main/Atom/AtomMacros.h) file. 
 
 # <a name="how_to_create_atom_css_style">How to create and use `Atom Css StyleSheet`</a>
 
@@ -409,7 +409,7 @@ int main() {
 }
 ```
 
-To earn more information about this feature you can check out [AtomStyleMacros.h]() and [AtomCssPropertiesMacros.h]() files.
+To earn more information about this feature you can check out [AtomStyleMacros.h](https://github.com/MobinYengejehi/Atom-HTML-CPP/blob/main/Atom/AtomStyleMacros.h) and [AtomCssPropertiesMacros.h](https://github.com/MobinYengejehi/Atom-HTML-CPP/blob/main/Atom/AtomCssPropertiesMacros.h) files.
 
 # <a name="how_to_use_css_properties_for_atom_element">How to use `Css Properties` for `Atom Element` directly</a>
 
@@ -675,7 +675,7 @@ char* atom_get_worker_script_path();
 
 `Description`: This function gets the javascript code that application will use on threads.
 
-`Note 1`: Its better to use [AtomWorker.js]().
+`Note 1`: Its better to use [AtomWorker.js](https://github.com/MobinYengejehi/Atom-HTML-CPP/blob/main/Atom-Worker-Script/AtomWorker.js).
 
 `Note 2`: If you don't free the string returned from this function it will occupie all your memory blocks
 
