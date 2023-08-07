@@ -1,8 +1,8 @@
 # Guidline
 
-🔵 [What is Atom](#what_is_atom)
+    🔵 [What is Atom](#what_is_atom)
 
-🔵 [How to use Atom](#how_to_use_atom)
+    🔵 [How to use Atom](#how_to_use_atom)
 
     🔵 someting
 
