@@ -12,6 +12,8 @@
 >
 >   🔵 [How to use Css Properties for Atom Element directly](#how_to_use_css_properties_for_atom_element)
 >
+>   🔵 [How to write Javascript code in CPP](#how_to_write_js_code_in_cpp)
+>
 >   🔵 [Atom shared functions](#atom_shared_function)
 >
 >>   🔵 [atom_sleep](#atom_sleep)
@@ -353,7 +355,7 @@ int main() {
 }
 ```
 
-To earn more information about this feature you can check out [AtomMacros.h]() file. 
+To earn more information about this feature you can check out [AtomMacros.h](https://github.com/MobinYengejehi/Atom-HTML-CPP/blob/main/Atom/AtomMacros.h) file. 
 
 # <a name="how_to_create_atom_css_style">How to create and use `Atom Css StyleSheet`</a>
 
@@ -407,7 +409,7 @@ int main() {
 }
 ```
 
-To earn more information about this feature you can check out [AtomStyleMacros.h]() and [AtomCssPropertiesMacros.h]() files.
+To earn more information about this feature you can check out [AtomStyleMacros.h](https://github.com/MobinYengejehi/Atom-HTML-CPP/blob/main/Atom/AtomStyleMacros.h) and [AtomCssPropertiesMacros.h](https://github.com/MobinYengejehi/Atom-HTML-CPP/blob/main/Atom/AtomCssPropertiesMacros.h) files.
 
 # <a name="how_to_use_css_properties_for_atom_element">How to use `Css Properties` for `Atom Element` directly</a>
 
@@ -437,6 +439,83 @@ int main() {
     atom_application_init();
 
     AtomGetDocumentBodyElement() += App();
+
+    return NULL;
+}
+```
+
+# <a name="how_to_write_js_code_in_cpp">How to write `Javascript` code in `CPP`</a>
+
+`Example`:
+
+```cpp
+#include <iostream>
+#include "Atom/Atom.h"
+
+ATOM_JS_DEFINITION void JsError(const char* error);
+ATOM_JS(void, JsError, (const char* error), {
+    if (error == NULL) {
+        return;
+    }
+
+    error = UTF8ToString(error);
+
+    console.error("Error:", error);
+});
+
+void JavascriptLog() {
+    std::cout << "writing js code : " << std::endl;
+
+    ATOM_DIRECT_ASM({
+        console.log("this is javascript log!");
+    });
+}
+
+int main() {
+    atom_application_init();
+
+    JavascriptLog();
+
+    std::cout << "this is cpp!" << std::endl;
+
+    JsError("error bla bla bla");
+
+    char* data = (char*)ATOM_DIRECT_ASM({
+        const x = $0; // 10
+        const y = $1; // 50
+
+        console.log("numbers came from cpp are : ", { x, y });
+
+        const string = `numbers are : ${x}, ${y} and with togheter are : ${x + y}`;
+        return atom_to_pointer(string);
+    }, 10, 50)
+
+    std::cout << "data came from js is : " << data << std::endl;
+
+    free((void*)data);
+
+    // ATOM_ASM(processName, javascriptCode);
+    ATOM_ASM("main", {
+        const processName = atom_get_process_name();
+        
+        console.log("process name is : ", processName);
+    });
+
+    // ATOM_LOAD_STRING(processName, javascriptCode);
+    ATOM_FUNCTION jsFunction = ATOM_LOAD_STRING("main", {
+        const cppString = UTF8ToString(arguments[0]);
+        const x = arguments[1];
+        const y = arguments[2];
+
+        console.log("js function data is : ", { cppString, x, y, result : x + y });
+    });
+
+    typedef void (*JSFunc)(const char*, int, int);
+
+    JSFunc func = (JSFunc)jsFunction;
+
+    func("this is a cpp string!", 30, 24);
+    func("this is second use of function", 10, 9093);
 
     return NULL;
 }
@@ -596,7 +675,7 @@ char* atom_get_worker_script_path();
 
 `Description`: This function gets the javascript code that application will use on threads.
 
-`Note 1`: Its better to use [AtomWorker.js]().
+`Note 1`: Its better to use [AtomWorker.js](https://github.com/MobinYengejehi/Atom-HTML-CPP/blob/main/Atom-Worker-Script/AtomWorker.js).
 
 `Note 2`: If you don't free the string returned from this function it will occupie all your memory blocks
 
