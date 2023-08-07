@@ -1,3 +1,15 @@
+/*****************************************************************************
+ *
+ *  PROJECT:     Atom HTML Graphics Library for `C & CPP`
+ *               (https://github.com/MobinYengejehi/Atom-HTML-CPP)
+ *  LICENSE:     See LICENSE in the top level directory
+ *  FILE:        AtomJSDefinitions.cpp
+ *
+ *  AUTHOR:      MobinYengejehi
+ *  GITHUB:      https://github.com/MobinYengejehi
+ *
+ *****************************************************************************/
+
 #include "AtomJSDefinitions.h"
 
 ATOM_JS(void, atom_sleep, (unsigned int ms), {

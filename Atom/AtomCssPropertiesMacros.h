@@ -1,3 +1,15 @@
+/*****************************************************************************
+ *
+ *  PROJECT:     Atom HTML Graphics Library for `C & CPP`
+ *               (https://github.com/MobinYengejehi/Atom-HTML-CPP)
+ *  LICENSE:     See LICENSE in the top level directory
+ *  FILE:        AtomCssPropertiesMacros.h
+ *
+ *  AUTHOR:      MobinYengejehi
+ *  GITHUB:      https://github.com/MobinYengejehi
+ *
+ *****************************************************************************/
+
 #pragma once
 
 #ifndef ATOM_CSS_PROPERTIES_MACROS_HEADER
