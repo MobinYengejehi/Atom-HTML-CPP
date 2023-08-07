@@ -312,7 +312,16 @@ AtomElement List(const size_t& itemCount) {
             }
 
             return items;
-        })()
+        })(),
+
+        OnMouseMove [](ATOM_EVENT eventHandle) {
+            ATOM_JS_VARIABLE e = ATOM_EVENT_VARIABLE(eventHandle);
+
+            int x = e["clientX"] ATOM_AS_INT;
+            int y = e["clientY"] ATOM_AS_INT;
+
+            std::cout << "mouse is moving on list : " << x << ", " << y << std::endl;
+        }
     };
 }
 
