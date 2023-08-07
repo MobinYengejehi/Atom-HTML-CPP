@@ -1,10 +1,160 @@
 # Guidline
 
-    🔵 [What is Atom](#what_is_atom)
-
-    🔵 [How to use Atom](#how_to_use_atom)
-
-    🔵 someting
+>   🔵 [What is Atom](#what_is_atom)
+>
+>   🔵 [How to use Atom](#how_to_use_atom)
+>
+>   🔵 [How to use Atom in Visual Studio](#how_to_use_atom_vs)
+>
+>   🔵 [How to create and use Atom Components](#how_to_create_atom_component)
+>
+>   🔵 [How to create and use Atom Css StyleSheet](#how_to_create_atom_css_style)
+>
+>   🔵 [How to use Css Properties for Atom Element directly](#how_to_use_css_properties_for_atom_element)
+>
+>   🔵 [Atom shared functions](#atom_shared_function)
+>
+>>   🔵 [atom_sleep](#atom_sleep)
+>
+>>   🔵 [atom_get_now](#atom_get_now)
+>
+>>   🔵 [atom_clear_console](#atom_clear_console)
+>
+>>   🔵 [atom_application_init](#atom_application_init)
+>
+>>   🔵 [atom_get_main_script_path](#atom_get_main_script_path)
+>
+>>   🔵 [atom_get_worker_script_path](#atom_get_worker_script_path)
+>
+>>   🔵 [atom_is_inside_worker](#atom_is_inside_worker)
+>
+>>   🔵 [atom_get_document_head](#atom_get_document_head)
+>
+>>   🔵 [atom_get_document_body](#atom_get_document_body)
+>
+>>   🔵 [atom_create_element](#atom_create_element)
+>
+>>   🔵 [atom_element_exists](#atom_element_exists)
+>
+>>   🔵 [atom_destroy_element](#atom_destroy_element)
+>
+>>   🔵 [atom_free_element](#atom_free_element)
+>
+>>   🔵 [atom_is_same_element](#atom_is_same_element)
+>
+>>   🔵 [atom_set_element_attribute](#atom_set_element_attribute)
+>
+>>   🔵 [atom_get_element_attribute](#atom_get_element_attribute)
+>
+>>   🔵 [atom_set_element_property](#atom_set_element_property)
+>
+>>   🔵 [atom_get_element_property](#atom_get_element_property)
+>
+>>   🔵 [atom_element_append_child](#atom_element_append_child)
+>
+>>   🔵 [atom_set_element_style](#atom_set_element_style)
+>
+>>   🔵 [atom_get_element_style](#atom_get_element_style)
+>
+>>   🔵 [atom_add_element_class](#atom_add_element_class)
+>
+>>   🔵 [atom_element_class_exists](#atom_element_class_exists)
+>
+>>   🔵 [atom_remove_element_class](#atom_remove_element_class)
+>
+>>   🔵 [atom_get_element_node_name](#atom_get_element_node_name)
+>
+>>   🔵 [atom_get_element_parent](#atom_get_element_parent)
+>
+>>   🔵 [atom_is_function_registered](#atom_is_function_registered)
+>
+>>   🔵 [atom_unregister_function](#atom_unregister_function)
+>
+>>   🔵 [atom_get_function](#atom_get_function)
+>
+>>   🔵 [atom_is_multi_thread_enabled](#atom_is_multi_thread_enabled)
+>
+>>   🔵 [atom_get_process_name](#atom_get_process_name)
+>
+>>   🔵 [atom_is_main_process](#atom_is_main_process)
+>
+>>   🔵 [atom_fork](#atom_fork)
+>
+>>   🔵 [atom_post_child_process](#atom_post_child_process)
+>
+>>   🔵 [atom_child_process_exists](#atom_child_process_exists)
+>
+>>   🔵 [atom_child_process_is_ready](#atom_child_process_is_ready)
+>
+>>   🔵 [atom_wait_till_process_be_ready](#atom_wait_till_process_be_ready)
+>
+>>   🔵 [atom_terminate_child_process](#atom_terminate_child_process)
+>
+>>   🔵 [atom_loadstring_child_process](#atom_loadstring_child_process)
+>
+>>   🔵 [atom_eval_child_process](#atom_eval_child_process)
+>
+>>   🔵 [atom_yield](#atom_yield)
+>
+>>   🔵 [atom_resume](#atom_resume)
+>
+>>   🔵 [atom_function_pointer_exists](#atom_function_pointer_exists)
+>
+>>   🔵 [atom_delete_function_pointer](#atom_delete_function_pointer)
+>
+>>   🔵 [atom_register_shared_function](#atom_register_shared_function)
+>
+>>   🔵 [atom_shared_function_exists](#atom_shared_function_exists)
+>
+>>   🔵 [atom_remove_shared_function](#atom_remove_shared_function)
+>
+>>   🔵 [atom_get_shared_function_process](#atom_get_shared_function_process)
+>
+>>   🔵 [atom_get_shared_function](#atom_get_shared_function)
+>
+>>   🔵 [atom_allocate_shared_memory](#atom_allocate_shared_memory)
+>
+>>   🔵 [atom_shared_memory_exists](#atom_shared_memory_exists)
+>
+>>   🔵 [atom_get_shared_memory_pointer](#atom_get_shared_memory_pointer)
+>
+>>   🔵 [atom_get_shared_memory_size](#atom_get_shared_memory_size)
+>
+>>   🔵 [atom_free_shared_memory](#atom_free_shared_memory)
+>
+>>   🔵 [atom_get_shared_memory](#atom_get_shared_memory)
+>
+>>   🔵 [atom_update_shared_memory](#atom_update_shared_memory)
+>
+>>   🔵 [atom_update_main_shared_memory](#atom_update_main_shared_memory)
+>
+>>   🔵 [atom_get_pointer_from_reference](#atom_get_pointer_from_reference)
+>
+>>   🔵 [atom_get_pointer_reference](#atom_get_pointer_reference)
+>
+>>   🔵 [atom_request_animation_frame](#atom_request_animation_frame)
+>
+>>   🔵 [atom_exists_animation_frame](#atom_exists_animation_frame)
+>
+>>   🔵 [atom_cancel_animation_frame](#atom_cancel_animation_frame)
+>
+>>   🔵 [atom_get_animation_frame_handler](#atom_get_animation_frame_handler)
+>
+>>   🔵 [atom_query_selector](#atom_query_selector)
+>
+>>   🔵 [atom_query_selector_all](#atom_query_selector_all)
+>
+>>   🔵 [atom_free_element_list](#atom_free_element_list)
+>
+>>   🔵 [atom_register_function](#atom_register_function)
+>
+>>   🔵 [atom_generage_random_key](#atom_generage_random_key)
+>
+>>   🔵 [atom_get_element_bounding_box](#atom_get_element_bounding_box)
+>
+>>   🔵 [atom_add_event_listener](#atom_add_event_listener)
+>
+>>   🔵 [atom_exit](#atom_exit)
 
 # <a name="what_is_atom">Atom `HTML Graphics` Library for `C & CPP`</a>
 
