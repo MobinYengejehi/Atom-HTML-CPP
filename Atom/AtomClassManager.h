@@ -1,0 +1,39 @@
+#pragma once
+
+#ifndef ATOM_CLASS_MANAGER
+#define ATOM_CLASS_MANAGER
+
+#include "AtomJSDefinitions.h"
+
+#include <string>
+#include <vector>
+
+typedef std::vector<std::string> AtomClassList;
+
+class AtomClassManager {
+public:
+	AtomClassManager();
+	AtomClassManager(const ATOM_ELEMENT_REFERENCE& elementReference);
+	~AtomClassManager() = default;
+
+	ATOM_ELEMENT_REFERENCE& GetHandle();
+	void                    GetList(AtomClassList* classList);
+	std::string             GetClassName();
+
+	void TakeOwnership(const ATOM_ELEMENT_REFERENCE& elementReference);
+	void AddClass(const std::string& className);
+	void RemoveClass(const std::string& className);
+	void SetClassName(const std::string& className);
+
+	bool Contains(const std::string& className);
+
+	void operator+=(const std::string& className);
+	void operator-=(const std::string& className);
+
+	operator bool();
+
+private:
+	ATOM_ELEMENT_REFERENCE reference;
+};
+
+#endif
