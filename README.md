@@ -410,7 +410,7 @@ To earn more information about this feature you can check out [AtomStyleMacros.h
 #include "Atom/AtomCssPropertiesMacros.h"
 
 AtomElement App() {
-    return Element { Node "div", Class "atom_app"
+    return Element { Node "div", Class "atom_app",
         Style {
             Position = Css(absolute),
             Width = Css(100px),
