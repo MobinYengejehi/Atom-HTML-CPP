@@ -308,8 +308,8 @@ AtomElement List(const size_t& itemCount) {
             for (size_t i = 0; i < count; i++) {
                 items.push_back(Element {
                     Node "span",
-                    InnerHTML "im item number : ",
-                    InnerHTML std::to_string(i)
+                    InnerContent "im item number : ",
+                    InnerContent std::to_string(i)
                 });
             }
 
@@ -430,8 +430,8 @@ AtomElement App() {
             Top = Css(50%),
             Transform = Css(translate(-50%, -50%))
         },
-        InnerHTML "<h1>hi this is the app</h1>",
-        InnerHTML "<span>this is an span element</span>"
+        InnerContent "<h1>hi this is the app</h1>",
+        InnerContent "<span>this is an span element</span>"
     }
 }
 
