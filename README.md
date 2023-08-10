@@ -333,7 +333,7 @@ AtomElement App() {
         List(15),
         BreakLine,
         Element { Node "h1",
-            TextConten "im footer!"
+            TextContent "im footer!"
         }
     };
 }
@@ -343,7 +343,7 @@ int main() {
 
     AtomElement body = AtomGetDocumentBodyElement();
 
-    AtomElement app = App();
+    AtomElement app = App() ATOM_SET_ELEMENT_REMOVABLE;
 
     {
         body += app;
@@ -438,7 +438,7 @@ AtomElement App() {
 int main() {
     atom_application_init();
 
-    AtomGetDocumentBodyElement() += App();
+    AtomGetDocumentBodyElement() += App() ATOM_SET_ELEMENT_REMOVABLE;
 
     return NULL;
 }
