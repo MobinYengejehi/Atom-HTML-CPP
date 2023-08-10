@@ -53,7 +53,8 @@
 
 #define ATOM_STRING std::string() =
 
-#define ATOM_JS EM_ASYNC_JS
+#define ATOM_JS EM_JS
+#define ATOM_JS_ASYNC EM_ASYNC_JS
 
 #define ATOM_LOAD_STRING(process, code) atom_loadstring_child_process(process, "" #code "")
 #define ATOM_ASM(process, code) atom_eval_child_process(process, "" #code "")
@@ -110,7 +111,7 @@ ATOM_JS_DEFINITION unsigned int _atom_get_temp_value();
 ATOM_JS_DEFINITION ATOM_ELEMENT_REFERENCE atom_get_document_head();
 ATOM_JS_DEFINITION ATOM_ELEMENT_REFERENCE atom_get_document_body();
 
-ATOM_JS_DEFINITION ATOM_ELEMENT_REFERENCE atom_create_element(const char* type);
+ATOM_JS_DEFINITION ATOM_ELEMENT_REFERENCE atom_create_element(const char* type, const char* Namespace = NULL);
 ATOM_JS_DEFINITION bool                   atom_element_exists(ATOM_ELEMENT_REFERENCE element);
 ATOM_JS_DEFINITION void                   atom_destroy_element(ATOM_ELEMENT_REFERENCE element);
 ATOM_JS_DEFINITION void                   atom_free_element(ATOM_ELEMENT_REFERENCE element);

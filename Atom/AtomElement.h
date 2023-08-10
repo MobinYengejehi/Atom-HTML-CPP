@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+#define ATOM_SET_ELEMENT_REMOVABLE .RemovableCopy()
+
 class AtomElement;
 
 typedef std::vector<AtomElement> AtomElementList;
@@ -31,11 +33,17 @@ class AtomElement {
 public:
 	AtomElement();
 	AtomElement(const std::string& type);
+	AtomElement(const std::string& type, const std::string& ns);
 	AtomElement(const std::string& type, const bool& lock);
+	AtomElement(const std::string& type, const std::string& ns, const bool& lock);
 	AtomElement(const std::string& type, const bool& lock, const bool& keep);
+	AtomElement(const std::string& type, const bool& lock, const bool& keep, const bool& use);
+	AtomElement(const std::string& type, const std::string& ns, const bool& lock, const bool& keep);
+	AtomElement(const std::string& type, const std::string& ns, const bool& lock, const bool& keep, const bool& use);
 	AtomElement(const ATOM_ELEMENT_REFERENCE& elementReference);
 	AtomElement(const ATOM_ELEMENT_REFERENCE& elementReference, const bool& lock);
 	AtomElement(const ATOM_ELEMENT_REFERENCE& elementReference, const bool& lock, const bool& keep);
+	AtomElement(const ATOM_ELEMENT_REFERENCE& elementReference, const bool& lock, const bool& keep, const bool& use);
 	AtomElement(const AtomElementOptions& options);
 	~AtomElement();
 
@@ -57,11 +65,14 @@ public:
 	void SetProperty(const std::string& propertyName, const std::string& value);
 	void SetLockedState(const bool& lock);
 	void KeepAlive(const bool& keep);
+	void SetLastUseState(const bool& use);
+	AtomElement RemovableCopy();
 
 	void TakeOwnership(const ATOM_ELEMENT_REFERENCE& elementReference);
 	void TakeOwnership(const AtomElement& element);
 
 	void Destroy();
+	void Clear();
 
 	void AddEvent(const std::string& eventName, ATOM_EVENT_HANDLER handler);
 
@@ -70,6 +81,7 @@ public:
 
 	bool IsLocked() const;
 	bool IsKeepingAliveReference() const;
+	bool IsLastUsed() const;
 
 	std::string  operator[](const std::string& propertyName) const;
 	AtomElement& operator+=(const AtomElement& child);
@@ -84,6 +96,9 @@ public:
 private:
 	bool locked;
 	bool keepReference;
+	bool lastUse;
+
+	std::string Namespace;
 
 	ATOM_ELEMENT_REFERENCE reference;
 
@@ -94,5 +109,7 @@ private:
 AtomElement AtomGetDocumentElement();
 AtomElement AtomGetDocumentHeadElement();
 AtomElement AtomGetDocumentBodyElement();
+
+AtomElement AtomGetElementFromJS(ATOM_JS_VARIABLE val);
 
 #endif

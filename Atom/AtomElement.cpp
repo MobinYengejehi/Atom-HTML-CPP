@@ -15,12 +15,14 @@
 AtomElement::AtomElement() {
 	SetLockedState(false);
 	KeepAlive(false);
+	SetLastUseState(false);
 	TakeOwnership(NULL);
 }
 
 AtomElement::AtomElement(const std::string& type) {
 	SetLockedState(false);
 	KeepAlive(false);
+	SetLastUseState(false);
 
 	if (type.empty()) {
 		TakeOwnership(NULL);
@@ -28,11 +30,27 @@ AtomElement::AtomElement(const std::string& type) {
 	}
 
 	TakeOwnership(atom_create_element(type.c_str()));
+}
+
+AtomElement::AtomElement(const std::string& type, const std::string& ns) {
+	SetLockedState(false);
+	KeepAlive(false);
+	SetLastUseState(false);
+
+	Namespace = ns;
+
+	if (type.empty() || Namespace.empty()) {
+		TakeOwnership(NULL);
+		return;
+	}
+
+	TakeOwnership(atom_create_element(type.c_str(), Namespace.c_str()));
 }
 
 AtomElement::AtomElement(const std::string& type, const bool& lock) {
 	SetLockedState(lock);
 	KeepAlive(false);
+	SetLastUseState(false);
 
 	if (type.empty()) {
 		TakeOwnership(NULL);
@@ -40,11 +58,27 @@ AtomElement::AtomElement(const std::string& type, const bool& lock) {
 	}
 
 	TakeOwnership(atom_create_element(type.c_str()));
+}
+
+AtomElement::AtomElement(const std::string& type, const std::string& ns, const bool& lock) {
+	SetLockedState(lock);
+	KeepAlive(false);
+	SetLastUseState(false);
+
+	Namespace = ns;
+
+	if (type.empty() || Namespace.empty()) {
+		TakeOwnership(NULL);
+		return;
+	}
+
+	TakeOwnership(atom_create_element(type.c_str(), Namespace.c_str()));
 }
 
 AtomElement::AtomElement(const std::string& type, const bool& lock, const bool& keep) {
 	SetLockedState(lock);
 	KeepAlive(keep);
+	SetLastUseState(false);
 
 	if (type.empty()) {
 		TakeOwnership(NULL);
@@ -54,21 +88,74 @@ AtomElement::AtomElement(const std::string& type, const bool& lock, const bool& 
 	TakeOwnership(atom_create_element(type.c_str()));
 }
 
+AtomElement::AtomElement(const std::string& type, const bool& lock, const bool& keep, const bool& use) {
+	SetLockedState(lock);
+	KeepAlive(keep);
+	SetLastUseState(use);
+
+	if (type.empty()) {
+		TakeOwnership(NULL);
+		return;
+	}
+
+	TakeOwnership(atom_create_element(type.c_str()));
+}
+
+AtomElement::AtomElement(const std::string& type, const std::string& ns, const bool& lock, const bool& keep) {
+	SetLockedState(lock);
+	KeepAlive(keep);
+	SetLastUseState(false);
+
+	Namespace = ns;
+
+	if (type.empty() || Namespace.empty()) {
+		TakeOwnership(NULL);
+		return;
+	}
+
+	TakeOwnership(atom_create_element(type.c_str(), Namespace.c_str()));
+}
+
+AtomElement::AtomElement(const std::string& type, const std::string& ns, const bool& lock, const bool& keep, const bool& use) {
+	SetLockedState(lock);
+	KeepAlive(keep);
+	SetLastUseState(use);
+
+	Namespace = ns;
+
+	if (type.empty() || Namespace.empty()) {
+		TakeOwnership(NULL);
+		return;
+	}
+
+	TakeOwnership(atom_create_element(type.c_str(), Namespace.c_str()));
+}
+
 AtomElement::AtomElement(const ATOM_ELEMENT_REFERENCE& elementReference) {
 	SetLockedState(false);
 	KeepAlive(false);
+	SetLastUseState(false);
 	TakeOwnership(elementReference);
 }
 
 AtomElement::AtomElement(const ATOM_ELEMENT_REFERENCE& elementReference, const bool& lock) {
 	SetLockedState(lock);
 	KeepAlive(false);
+	SetLastUseState(false);
 	TakeOwnership(elementReference);
 }
 
 AtomElement::AtomElement(const ATOM_ELEMENT_REFERENCE& elementReference, const bool& lock, const bool& keep) {
 	SetLockedState(lock);
 	KeepAlive(keep);
+	SetLastUseState(false);
+	TakeOwnership(elementReference);
+}
+
+AtomElement::AtomElement(const ATOM_ELEMENT_REFERENCE& elementReference, const bool& lock, const bool& keep, const bool& use) {
+	SetLockedState(lock);
+	KeepAlive(keep);
+	SetLastUseState(use);
 	TakeOwnership(elementReference);
 }
 
@@ -253,6 +340,22 @@ void AtomElement::KeepAlive(const bool& keep) {
 	keepReference = keep;
 }
 
+
+void AtomElement::SetLastUseState(const bool& use) {
+	lastUse = use;
+}
+
+AtomElement AtomElement::RemovableCopy() {
+	AtomElement copy;
+	
+	copy.TakeOwnership(reference);
+	copy.SetLockedState(locked);
+	copy.KeepAlive(false);
+	copy.SetLastUseState(false);
+	
+	return copy;
+}
+
 void AtomElement::TakeOwnership(const ATOM_ELEMENT_REFERENCE& elementReference) {
 	reference = elementReference;
 	
@@ -262,12 +365,25 @@ void AtomElement::TakeOwnership(const ATOM_ELEMENT_REFERENCE& elementReference) 
 
 void AtomElement::TakeOwnership(const AtomElement& element) {
 	SetLockedState(element.IsLocked());
-	KeepAlive(element.IsKeepingAliveReference());
+	KeepAlive(element.IsLastUsed() ? false : element.IsKeepingAliveReference());
 	TakeOwnership(element.GetHandle());
 }
 
 void AtomElement::Destroy() {
 	atom_destroy_element(reference);
+}
+
+void AtomElement::Clear() {
+	ATOM_DIRECT_ASM({
+		const reference = $0;
+
+		const element = atom_get_element_by_reference(reference);
+		if (!element) {
+			return;
+		}
+
+		element.innerHTML = "";
+	}, reference);
 }
 
 void AtomElement::AddEvent(const std::string& eventName, ATOM_EVENT_HANDLER handler) {
@@ -310,7 +426,13 @@ void AtomElement::ApplyOption(const AtomElementOption& option) {
 			return;
 		}
 
-		ATOM_ELEMENT_REFERENCE ref = atom_create_element(nodeName.c_str());
+		ATOM_ELEMENT_REFERENCE ref = NULL;
+
+		if (!Namespace.empty()) {
+			ref = atom_create_element(nodeName.c_str(), Namespace.c_str());
+		}else{
+			ref = atom_create_element(nodeName.c_str());
+		}
 
 		atom_free_element(reference);
 
@@ -359,6 +481,10 @@ void AtomElement::ApplyOption(const AtomElementOption& option) {
 		AtomElementStylePropertyList properties = AtomGetElementOption<AtomElementStylePropertyList>(option);
 
 		styleManager.ApplyProperties(properties);
+	}else if (type == AtomElementOptionType::Namespace) {
+		AtomElementOptionNamespace NamespaceO = AtomGetElementOption<AtomElementOptionNamespace>(option);
+
+		Namespace = NamespaceO.value;
 	}
 }
 
@@ -380,6 +506,10 @@ bool AtomElement::IsKeepingAliveReference() const {
 	return keepReference;
 }
 
+bool AtomElement::IsLastUsed() const {
+	return lastUse;
+}
+
 std::string AtomElement::operator[](const std::string& propertyName) const {
 	return GetProperty(propertyName);
 }
@@ -391,7 +521,7 @@ AtomElement& AtomElement::operator+=(const AtomElement& child) {
 
 AtomElement& AtomElement::operator=(const AtomElement& element) {
 	SetLockedState(element.IsLocked());
-	KeepAlive(element.IsKeepingAliveReference());
+	KeepAlive(element.IsLastUsed() ? false : element.IsKeepingAliveReference());
 	TakeOwnership(element.GetHandle());
 
 	return *this;
@@ -423,11 +553,19 @@ AtomElement AtomGetDocumentElement() {
 AtomElement AtomGetDocumentHeadElement() {
 	ATOM_ELEMENT_REFERENCE ref = atom_get_document_head();
 
-	return AtomElement(ref);
+	return AtomElement(ref, false, true);
 }
 
 AtomElement AtomGetDocumentBodyElement() {
 	ATOM_ELEMENT_REFERENCE ref = atom_get_document_body();
 
-	return AtomElement(ref);
+	return AtomElement(ref, false ,true);
+}
+
+AtomElement AtomGetElementFromJS(ATOM_JS_VARIABLE val) {
+	if (val.isNull()) {
+		return NULL;
+	}
+
+	return ATOM_JS_VARIABLE::global(NULL).call<ATOM_ELEMENT_REFERENCE>("atom_create_element_reference", val);
 }

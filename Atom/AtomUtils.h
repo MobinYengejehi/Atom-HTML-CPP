@@ -3,8 +3,8 @@
  *  PROJECT:     Atom HTML Graphics Library for `C & CPP`
  *               (https://github.com/MobinYengejehi/Atom-HTML-CPP)
  *  LICENSE:     See LICENSE in the top level directory
- *  FILE:        Atom.h
- * 
+ *  FILE:        AtomUtils.h
+ *
  *  AUTHOR:      MobinYengejehi
  *  GITHUB:      https://github.com/MobinYengejehi
  *
@@ -12,18 +12,14 @@
 
 #pragma once
 
-#ifndef ATOM_HEADER
-#define ATOM_HEADER
+#ifndef ATOM_UTILS_HEADER
+#define ATOM_UTILS_HEADER
 
-#include "AtomJSDefinitions.h"
+#include <string>
+#include <vector>
 
-#include "AtomClassManager.h"
-#include "AtomStyleManager.h"
+std::string ConcatStringList(const std::vector<std::string>& list, const std::string& with);
 
-#include "AtomElementOptions.h"
-
-#include "AtomElement.h"
-
-#include "AtomUtils.h"
+std::string TrimString(const std::string& content);
 
 #endif

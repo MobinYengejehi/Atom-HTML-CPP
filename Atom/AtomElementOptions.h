@@ -40,7 +40,8 @@ class AtomElement;
                                 AtomElementOptionKeepAlive, \
                                 AtomElementOptionReference, \
                                 AtomElementOptionInnerHTML, \
-                                AtomElementStylePropertyList \
+                                AtomElementStylePropertyList, \
+                                AtomElementOptionNamespace \
                             >
 
 struct AtomElementOptionNodeName {
@@ -144,6 +145,13 @@ struct AtomElementOptionInnerHTML {
 	AtomElementOptionInnerHTML& operator=(const std::string& v);
 };
 
+struct AtomElementOptionNamespace {
+	std::string value;
+
+	AtomElementOptionNamespace& operator=(const AtomElementOptionNamespace& Namespace);
+	AtomElementOptionNamespace& operator=(const std::string& v);
+};
+
 enum class AtomElementOptionType {
 	Unknown = 0,
 	Element = 1,
@@ -159,7 +167,8 @@ enum class AtomElementOptionType {
 	KeepAlive = 11,
 	Reference = 12,
 	InnerHTML = 13,
-	Style = 14
+	Style = 14,
+	Namespace = 15
 };
 
 typedef ATOM_ELEMENT_OPTION AtomElementOption;

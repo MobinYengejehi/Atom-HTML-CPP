@@ -35,6 +35,7 @@ public:
 	void TakeOwnership(const ATOM_ELEMENT_REFERENCE& elementReference);
 	void AddClass(const std::string& className);
 	void RemoveClass(const std::string& className);
+	void ToggleClass(const std::string& className);
 	void SetClassName(const std::string& className);
 
 	bool Contains(const std::string& className);

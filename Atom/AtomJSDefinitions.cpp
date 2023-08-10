@@ -12,7 +12,10 @@
 
 #include "AtomJSDefinitions.h"
 
-ATOM_JS(void, atom_sleep, (unsigned int ms), {
+// if you define `ATOM_USE_MULTI_THREAD_DEFINITION` then you can use element functions on other threads too
+//#define ATOM_USE_MULTI_THREAD_DEFINITION
+
+ATOM_JS_ASYNC(void, atom_sleep, (unsigned int ms), {
  	await new Promise(resolve => setTimeout(resolve, ms));
 });
 
@@ -155,12 +158,22 @@ ATOM_JS(void, atom_application_init, (), {
 		return ref;
 	}
 
-	function atom_create_element(type) {
+	function atom_get_element_by_reference(reference) {
+		return Module.AtomElements[reference];
+	}
+
+	function atom_create_element(type, namespace) {
 		if (typeof type != "string" || type.length < 1) {
 			return;
 		}
 
-		const element = document.createElement(type);
+		var element;
+
+		if (typeof namespace == "string" && namespace.length > 0) {
+			element = document.createElementNS(namespace, type);
+		}else{
+			element = document.createElement(type);
+		}
 
 		return atom_create_element_reference(element);
 	}
@@ -449,7 +462,7 @@ ATOM_JS(void, atom_application_init, (), {
 
 		if (name && name.length > 0) {
 			if (!Module.AtomFunctions[name]) {
-				Module.AtomFunctions[name] = handler;
+				Module.AtomFunctions[name] = { pointer : handler, caller : wasmTable.get(handler) };
 			}
 		}
 	}
@@ -476,12 +489,16 @@ ATOM_JS(void, atom_application_init, (), {
 			return NULL;
 		}
 
-		return Module.AtomFunctions[name];
+		return Module.AtomFunctions[name].pointer;
 	}
 
 	function atom_get_function(name, signature) {
 		if (!self.atom_is_function_registered(name)) {
 			return;
+		}
+
+		if (signature == "asm") {
+			return Module.AtomFunctions[name].caller;
 		}
 
 		const functionPointer = self.atom_get_function_pointer(name);
@@ -1328,6 +1345,7 @@ ATOM_JS(void, atom_application_init, (), {
 	self.atom_find_signature_caller = atom_find_signature_caller;
 	self.atom_signature_call = atom_signature_call;
 	self.atom_create_element_reference = CreateInternalSharedFunction(atom_create_element_reference);
+	self.atom_get_element_by_reference = atom_get_element_by_reference;
 	self.atom_create_element = CreateInternalSharedFunction(atom_create_element);
 	self.atom_element_exists = CreateInternalSharedFunction(atom_element_exists);
 	self.atom_remove_element_reference = CreateInternalSharedFunction(atom_remove_element_reference);
@@ -1424,33 +1442,41 @@ ATOM_JS(ATOM_ELEMENT_REFERENCE, atom_get_document_body, (), {
 	return 2;
 });
 
-ATOM_JS(ATOM_ELEMENT_REFERENCE, atom_create_element, (const char* type), {
+#ifdef ATOM_USE_MULTI_THREAD_DEFINITION
+
+ATOM_JS_ASYNC(ATOM_ELEMENT_REFERENCE, atom_create_element, (const char* type, const char* Namespace), {
 	if (type == NULL) {
 		return NULL;
 	}
 
-	type = UTF8ToString(type);
+	console.log("using multithread def!");
 
-	return await atom_create_element(type);
+	type = UTF8ToString(type);
+	
+	if (Namespace != NULL) {
+		Namespace = UTF8ToString(Namespace);
+	}
+
+	return await atom_create_element(type, Namespace);
 });
 
-ATOM_JS(bool, atom_element_exists, (ATOM_ELEMENT_REFERENCE element), {
+ATOM_JS_ASYNC(bool, atom_element_exists, (ATOM_ELEMENT_REFERENCE element), {
 	return await atom_element_exists(element);
 });
 
-ATOM_JS(void, atom_destroy_element, (ATOM_ELEMENT_REFERENCE element), {
+ATOM_JS_ASYNC(void, atom_destroy_element, (ATOM_ELEMENT_REFERENCE element), {
 	await atom_destroy_element(element);
 });
 
-ATOM_JS(void, atom_free_element, (ATOM_ELEMENT_REFERENCE element), {
+ATOM_JS_ASYNC(void, atom_free_element, (ATOM_ELEMENT_REFERENCE element), {
 	await atom_remove_element_reference(element);
 });
 
-ATOM_JS(bool, atom_is_same_element, (ATOM_ELEMENT_REFERENCE element, ATOM_ELEMENT_REFERENCE target), {
+ATOM_JS_ASYNC(bool, atom_is_same_element, (ATOM_ELEMENT_REFERENCE element, ATOM_ELEMENT_REFERENCE target), {
 	return await atom_is_same_element(element, target);
 });
 
-ATOM_JS(void, atom_set_element_attribute, (ATOM_ELEMENT_REFERENCE element, const char* attribute, const char* value), {
+ATOM_JS_ASYNC(void, atom_set_element_attribute, (ATOM_ELEMENT_REFERENCE element, const char* attribute, const char* value), {
 	if (attribute == NULL) {
 		return;
 	}
@@ -1464,7 +1490,7 @@ ATOM_JS(void, atom_set_element_attribute, (ATOM_ELEMENT_REFERENCE element, const
 	await atom_set_element_attribute(element, attribute, value);
 });
 
-ATOM_JS(char*, atom_get_element_attribute, (ATOM_ELEMENT_REFERENCE element, const char* attribute), {
+ATOM_JS_ASYNC(char*, atom_get_element_attribute, (ATOM_ELEMENT_REFERENCE element, const char* attribute), {
 	if (attribute == NULL) {
 		return NULL;
 	}
@@ -1472,6 +1498,251 @@ ATOM_JS(char*, atom_get_element_attribute, (ATOM_ELEMENT_REFERENCE element, cons
 	attribute = UTF8ToString(attribute);
 
 	const value = await atom_get_element_attribute(element, attribute);
+	if (typeof value == "string") {
+		return atom_to_pointer(value);
+	}
+
+	return value;
+});
+
+ATOM_JS_ASYNC(void, atom_set_element_property, (ATOM_ELEMENT_REFERENCE element, const char* property, const char* value), {
+	if (property == NULL) {
+		return;
+	}
+	if (value == NULL) {
+		return;
+	}
+
+	property = UTF8ToString(property);
+	value = UTF8ToString(value);
+
+	await atom_set_element_property(element, property, value);
+});
+
+ATOM_JS_ASYNC(char*, atom_get_element_property, (ATOM_ELEMENT_REFERENCE element, const char* property), {
+	if (property == NULL) {
+		return NULL;
+	}
+
+	property = UTF8ToString(property);
+
+	const value = await atom_get_element_property(element, property);
+
+	if (typeof value == "string") {
+		return self.atom_to_pointer(value);
+	}
+
+	return value;
+});
+
+ATOM_JS_ASYNC(void, atom_element_append_child, (ATOM_ELEMENT_REFERENCE element, ATOM_ELEMENT_REFERENCE target), {
+	await atom_element_append_child(element, target);
+});
+
+ATOM_JS_ASYNC(void, atom_set_element_style, (ATOM_ELEMENT_REFERENCE element, const char* property, const char* value), {
+	if (property == NULL) {
+		return;
+	}
+	if (value == NULL) {
+		return;
+	}
+
+	property = UTF8ToString(property);
+	value = UTF8ToString(value);
+
+	await atom_set_element_style(element, property, value);
+});
+
+ATOM_JS_ASYNC(char*, atom_get_element_style, (ATOM_ELEMENT_REFERENCE element, const char* property), {
+	if (propert == NULL) {
+		return NULL;
+	}
+
+	property = UTF8ToString(property);
+
+	const value = await atom_get_element_style(element, property);
+
+	if (typeof value == "string") {
+		return self.atom_to_pointer(value);
+	}
+
+	return value;
+});
+
+ATOM_JS_ASYNC(ATOM_POINTER, _atom_get_element_bounding_box, (ATOM_ELEMENT_REFERENCE element), {
+	const buffer = await atom_get_element_bounding_box_bytes(element);
+
+	if (buffer) {
+		const size = buffer.byteLength;
+		if (!size || size < 1) {
+			return NULL;
+		}
+
+		const pointer = _malloc(size);
+
+		const heap = new Uint8Array(HEAPU8.buffer, pointer, size);
+		heap.set(new Uint8Array(buffer));
+
+		return pointer;
+	}
+
+	return NULL;
+});
+
+ATOM_JS_ASYNC(ATOM_ELEMENT_REFERENCE, _atom_document_query_selector, (const char* query), {
+	if (query == NULL) {
+		return NULL;
+	}
+
+	query = UTF8ToString(query);
+
+	return await atom_query_selector(NULL, query);
+});
+
+ATOM_JS_ASYNC(ATOM_ELEMENT_REFERENCE, _atom_query_selector, (ATOM_ELEMENT_REFERENCE element, const char* query), {
+	if (query == NULL) {
+		return NULL;
+	}
+
+	query = UTF8ToString(query);
+
+	return await atom_query_selector(element, query);
+});
+
+ATOM_JS_ASYNC(ATOM_POINTER, _atom_document_query_selector_all_pointer, (const char* query), {
+	if (query == NULL) {
+		return NULL;
+	}
+
+	query = UTF8ToString(query);
+
+	const elements = await atom_query_selector_all(NULL, query);
+
+	if (elements) {
+		atom_set_temp_value(elements.length);
+
+		return self.atom_to_pointer(new Uint32Array(elements));
+	}
+
+	return NULL;
+});
+
+ATOM_JS_ASYNC(ATOM_POINTER, _atom_query_selector_all_pointer, (ATOM_ELEMENT_REFERENCE element, const char* query), {
+	if (query == NULL) {
+		return NULL;
+	}
+
+	query = UTF8ToString(query);
+
+	const elements = await atom_query_selector_all(element, query);
+
+	if (elements) {
+		atom_set_temp_value(elements.length);
+
+		return self.atom_to_pointer(new Uint32Array(elements));
+	}
+
+	return NULL;
+});
+
+ATOM_JS_ASYNC(void, atom_add_element_class, (ATOM_ELEMENT_REFERENCE element, const char* className), {
+	if (className == NULL) {
+		return;
+	}
+
+	className = UTF8ToString(className);
+
+	await atom_add_element_class(element, className);
+});
+
+ATOM_JS_ASYNC(bool, atom_element_class_exists, (ATOM_ELEMENT_REFERENCE element, const char* className), {
+	if (className == NULL) {
+		return;
+	}
+
+	className = UTF8ToString(className);
+
+	return await atom_element_class_exists(element, className);
+});
+
+ATOM_JS_ASYNC(void, atom_remove_element_class, (ATOM_ELEMENT_REFERENCE element, const char* className), {
+	if (className == NULL) {
+		return;
+	}
+
+	className = UTF8ToString(className);
+
+	await atom_remove_element_class(element, className);
+});
+
+ATOM_JS_ASYNC(char*, atom_get_element_node_name, (ATOM_ELEMENT_REFERENCE element), {
+	const name = await atom_get_element_node_name(element);
+	
+	if (name) {
+		return atom_to_pointer(name);
+	}
+
+	return NULL;
+});
+
+ATOM_JS_ASYNC(ATOM_ELEMENT_REFERENCE, atom_get_element_parent, (ATOM_ELEMENT_REFERENCE element), {
+	return await atom_get_element_parent(element);
+});
+
+#else
+
+ATOM_JS(ATOM_ELEMENT_REFERENCE, atom_create_element, (const char* type, const char* Namespace), {
+	if (type == NULL) {
+		return NULL;
+	}
+
+	type = UTF8ToString(type);
+	
+	if (Namespace != NULL) {
+		Namespace = UTF8ToString(Namespace);
+	}
+
+	return atom_create_element(type, Namespace);
+});
+
+ATOM_JS(bool, atom_element_exists, (ATOM_ELEMENT_REFERENCE element), {
+	return atom_element_exists(element);
+});
+
+ATOM_JS(void, atom_destroy_element, (ATOM_ELEMENT_REFERENCE element), {
+	atom_destroy_element(element);
+});
+
+ATOM_JS(void, atom_free_element, (ATOM_ELEMENT_REFERENCE element), {
+	atom_remove_element_reference(element);
+});
+
+ATOM_JS(bool, atom_is_same_element, (ATOM_ELEMENT_REFERENCE element, ATOM_ELEMENT_REFERENCE target), {
+	return atom_is_same_element(element, target);
+});
+
+ATOM_JS(void, atom_set_element_attribute, (ATOM_ELEMENT_REFERENCE element, const char* attribute, const char* value), {
+	if (attribute == NULL) {
+		return;
+	}
+	if (value == NULL) {
+		return;
+	}
+
+	attribute = UTF8ToString(attribute);
+	value = UTF8ToString(value);
+
+	atom_set_element_attribute(element, attribute, value);
+});
+
+ATOM_JS(char*, atom_get_element_attribute, (ATOM_ELEMENT_REFERENCE element, const char* attribute), {
+	if (attribute == NULL) {
+		return NULL;
+	}
+
+	attribute = UTF8ToString(attribute);
+
+	const value = atom_get_element_attribute(element, attribute);
 	if (typeof value == "string") {
 		return atom_to_pointer(value);
 	}
@@ -1490,7 +1761,7 @@ ATOM_JS(void, atom_set_element_property, (ATOM_ELEMENT_REFERENCE element, const 
 	property = UTF8ToString(property);
 	value = UTF8ToString(value);
 
-	await atom_set_element_property(element, property, value);
+	atom_set_element_property(element, property, value);
 });
 
 ATOM_JS(char*, atom_get_element_property, (ATOM_ELEMENT_REFERENCE element, const char* property), {
@@ -1500,7 +1771,7 @@ ATOM_JS(char*, atom_get_element_property, (ATOM_ELEMENT_REFERENCE element, const
 
 	property = UTF8ToString(property);
 
-	const value = await atom_get_element_property(element, property);
+	const value = atom_get_element_property(element, property);
 
 	if (typeof value == "string") {
 		return self.atom_to_pointer(value);
@@ -1510,7 +1781,7 @@ ATOM_JS(char*, atom_get_element_property, (ATOM_ELEMENT_REFERENCE element, const
 });
 
 ATOM_JS(void, atom_element_append_child, (ATOM_ELEMENT_REFERENCE element, ATOM_ELEMENT_REFERENCE target), {
-	await atom_element_append_child(element, target);
+	atom_element_append_child(element, target);
 });
 
 ATOM_JS(void, atom_set_element_style, (ATOM_ELEMENT_REFERENCE element, const char* property, const char* value), {
@@ -1524,7 +1795,7 @@ ATOM_JS(void, atom_set_element_style, (ATOM_ELEMENT_REFERENCE element, const cha
 	property = UTF8ToString(property);
 	value = UTF8ToString(value);
 
-	await atom_set_element_style(element, property, value);
+	atom_set_element_style(element, property, value);
 });
 
 ATOM_JS(char*, atom_get_element_style, (ATOM_ELEMENT_REFERENCE element, const char* property), {
@@ -1534,7 +1805,7 @@ ATOM_JS(char*, atom_get_element_style, (ATOM_ELEMENT_REFERENCE element, const ch
 
 	property = UTF8ToString(property);
 
-	const value = await atom_get_element_style(element, property);
+	const value = atom_get_element_style(element, property);
 
 	if (typeof value == "string") {
 		return self.atom_to_pointer(value);
@@ -1544,7 +1815,7 @@ ATOM_JS(char*, atom_get_element_style, (ATOM_ELEMENT_REFERENCE element, const ch
 });
 
 ATOM_JS(ATOM_POINTER, _atom_get_element_bounding_box, (ATOM_ELEMENT_REFERENCE element), {
-	const buffer = await atom_get_element_bounding_box_bytes(element);
+	const buffer = atom_get_element_bounding_box_bytes(element);
 
 	if (buffer) {
 		const size = buffer.byteLength;
@@ -1570,7 +1841,7 @@ ATOM_JS(ATOM_ELEMENT_REFERENCE, _atom_document_query_selector, (const char* quer
 
 	query = UTF8ToString(query);
 
-	return await atom_query_selector(NULL, query);
+	return atom_query_selector(NULL, query);
 });
 
 ATOM_JS(ATOM_ELEMENT_REFERENCE, _atom_query_selector, (ATOM_ELEMENT_REFERENCE element, const char* query), {
@@ -1580,7 +1851,7 @@ ATOM_JS(ATOM_ELEMENT_REFERENCE, _atom_query_selector, (ATOM_ELEMENT_REFERENCE el
 
 	query = UTF8ToString(query);
 
-	return await atom_query_selector(element, query);
+	return atom_query_selector(element, query);
 });
 
 ATOM_JS(ATOM_POINTER, _atom_document_query_selector_all_pointer, (const char* query), {
@@ -1590,7 +1861,7 @@ ATOM_JS(ATOM_POINTER, _atom_document_query_selector_all_pointer, (const char* qu
 
 	query = UTF8ToString(query);
 
-	const elements = await atom_query_selector_all(NULL, query);
+	const elements = atom_query_selector_all(NULL, query);
 
 	if (elements) {
 		atom_set_temp_value(elements.length);
@@ -1608,7 +1879,7 @@ ATOM_JS(ATOM_POINTER, _atom_query_selector_all_pointer, (ATOM_ELEMENT_REFERENCE 
 
 	query = UTF8ToString(query);
 
-	const elements = await atom_query_selector_all(element, query);
+	const elements = atom_query_selector_all(element, query);
 
 	if (elements) {
 		atom_set_temp_value(elements.length);
@@ -1626,7 +1897,7 @@ ATOM_JS(void, atom_add_element_class, (ATOM_ELEMENT_REFERENCE element, const cha
 
 	className = UTF8ToString(className);
 
-	await atom_add_element_class(element, className);
+	atom_add_element_class(element, className);
 });
 
 ATOM_JS(bool, atom_element_class_exists, (ATOM_ELEMENT_REFERENCE element, const char* className), {
@@ -1636,7 +1907,7 @@ ATOM_JS(bool, atom_element_class_exists, (ATOM_ELEMENT_REFERENCE element, const 
 
 	className = UTF8ToString(className);
 
-	return await atom_element_class_exists(element, className);
+	return atom_element_class_exists(element, className);
 });
 
 ATOM_JS(void, atom_remove_element_class, (ATOM_ELEMENT_REFERENCE element, const char* className), {
@@ -1646,11 +1917,11 @@ ATOM_JS(void, atom_remove_element_class, (ATOM_ELEMENT_REFERENCE element, const 
 
 	className = UTF8ToString(className);
 
-	await atom_remove_element_class(element, className);
+	atom_remove_element_class(element, className);
 });
 
 ATOM_JS(char*, atom_get_element_node_name, (ATOM_ELEMENT_REFERENCE element), {
-	const name = await atom_get_element_node_name(element);
+	const name = atom_get_element_node_name(element);
 	
 	if (name) {
 		return atom_to_pointer(name);
@@ -1660,8 +1931,10 @@ ATOM_JS(char*, atom_get_element_node_name, (ATOM_ELEMENT_REFERENCE element), {
 });
 
 ATOM_JS(ATOM_ELEMENT_REFERENCE, atom_get_element_parent, (ATOM_ELEMENT_REFERENCE element), {
-	return await atom_get_element_parent(element);
+	return atom_get_element_parent(element);
 });
+
+#endif
 
 ATOM_JS(bool, atom_is_function_registered, (const char* name), {
 	name = UTF8ToString(name);
@@ -1723,7 +1996,7 @@ ATOM_JS(bool, atom_child_process_is_ready, (const char* name), {
 	return atom_child_process_is_ready(name);
 });
 
-EM_ASYNC_JS(void, atom_wait_till_process_be_ready, (const char* name), {
+ATOM_JS_ASYNC(void, atom_wait_till_process_be_ready, (const char* name), {
 	name = UTF8ToString(name);
 
 	if (!atom_child_process_exists(name)) {
@@ -1743,7 +2016,7 @@ ATOM_JS(void, atom_terminate_child_process, (const char* name), {
 	atom_terminate_child_process(name);
 });
 
-ATOM_JS(ATOM_FUNCTION, atom_loadstring_child_process, (const char* name, const char* code), {
+ATOM_JS_ASYNC(ATOM_FUNCTION, atom_loadstring_child_process, (const char* name, const char* code), {
 	if (name == NULL) {
 		return;
 	}
@@ -1763,7 +2036,7 @@ ATOM_JS(ATOM_FUNCTION, atom_loadstring_child_process, (const char* name, const c
 	return NULL;
 });
 
-ATOM_JS(ATOM_JS_VARIABLE_HANDLE, atom_eval_child_process, (const char* name, const char* code), {
+ATOM_JS_ASYNC(ATOM_JS_VARIABLE_HANDLE, atom_eval_child_process, (const char* name, const char* code), {
 	if (name == NULL) {
 		return NULL;
 	}
@@ -1783,7 +2056,7 @@ ATOM_JS(ATOM_JS_VARIABLE_HANDLE, atom_eval_child_process, (const char* name, con
 	return NULL;
 });
 
-ATOM_JS(void, atom_yield, (), {
+ATOM_JS_ASYNC(void, atom_yield, (), {
 	await atom_yield();
 });
 
@@ -1801,7 +2074,7 @@ ATOM_JS(void, atom_delete_function_pointer, (ATOM_FUNCTION func), {
 	atom_delete_function_pointer(func);
 });
 
-ATOM_JS(void, atom_register_shared_function, (const char* name, ATOM_FUNCTION func, bool clearMemory), {
+ATOM_JS_ASYNC(void, atom_register_shared_function, (const char* name, ATOM_FUNCTION func, bool clearMemory), {
 	if (name == NULL) {
 		return;
 	}
@@ -1816,7 +2089,7 @@ ATOM_JS(void, atom_register_shared_function, (const char* name, ATOM_FUNCTION fu
 	await atom_register_shared_function(name, func, clearMemory, processName);
 });
 
-ATOM_JS(bool, atom_shared_function_exists, (const char* name), {
+ATOM_JS_ASYNC(bool, atom_shared_function_exists, (const char* name), {
 	if (name == NULL) {
 		return false;
 	}
@@ -1826,7 +2099,7 @@ ATOM_JS(bool, atom_shared_function_exists, (const char* name), {
 	return await atom_shared_function_exists(name);
 });
 
-ATOM_JS(void, atom_remove_shared_function, (const char* name), {
+ATOM_JS_ASYNC(void, atom_remove_shared_function, (const char* name), {
 	if (name == NULL) {
 		return;
 	}
@@ -1836,7 +2109,7 @@ ATOM_JS(void, atom_remove_shared_function, (const char* name), {
 	return await atom_remove_shared_function(name);
 });
 
-ATOM_JS(char*, atom_get_shared_function_process, (const char* name), {
+ATOM_JS_ASYNC(char*, atom_get_shared_function_process, (const char* name), {
 	if (name == NULL) {
 		return NULL;
 	}
@@ -1848,7 +2121,7 @@ ATOM_JS(char*, atom_get_shared_function_process, (const char* name), {
 	return atom_to_pointer(process);
 });
 
-ATOM_JS(ATOM_FUNCTION, atom_get_shared_function, (const char* name), {
+ATOM_JS_ASYNC(ATOM_FUNCTION, atom_get_shared_function, (const char* name), {
 	if (name == NULL) {
 		return NULL;
 	}
@@ -1864,7 +2137,7 @@ ATOM_JS(ATOM_FUNCTION, atom_get_shared_function, (const char* name), {
 	return atom_to_pointer(func);
 });
 
-ATOM_JS(void, atom_allocate_shared_memory, (const char* name, size_t size), {
+ATOM_JS_ASYNC(void, atom_allocate_shared_memory, (const char* name, size_t size), {
 	if (name == NULL) {
 		return;
 	}
@@ -1874,7 +2147,7 @@ ATOM_JS(void, atom_allocate_shared_memory, (const char* name, size_t size), {
 	await atom_allocate_shared_memory(name, size);
 });
 
-ATOM_JS(bool, atom_shared_memory_exists, (const char* name), {
+ATOM_JS_ASYNC(bool, atom_shared_memory_exists, (const char* name), {
 	if (name == NULL) {
 		return;
 	}
@@ -1884,7 +2157,7 @@ ATOM_JS(bool, atom_shared_memory_exists, (const char* name), {
 	return await atom_shared_memory_exists(name);
 });
 
-ATOM_JS(ATOM_POINTER_REFERENCE, atom_get_shared_memory_pointer, (const char* name), {
+ATOM_JS_ASYNC(ATOM_POINTER_REFERENCE, atom_get_shared_memory_pointer, (const char* name), {
 	if (name == NULL) {
 		return;
 	}
@@ -1894,7 +2167,7 @@ ATOM_JS(ATOM_POINTER_REFERENCE, atom_get_shared_memory_pointer, (const char* nam
 	return await atom_get_shared_memory_pointer(name);
 });
 
-ATOM_JS(size_t, atom_get_shared_memory_size, (const char* name), {
+ATOM_JS_ASYNC(size_t, atom_get_shared_memory_size, (const char* name), {
 	if (name == NULL) {
 		return;
 	}
@@ -1904,7 +2177,7 @@ ATOM_JS(size_t, atom_get_shared_memory_size, (const char* name), {
 	return await atom_get_shared_memory_size(name);
 });
 
-ATOM_JS(void, atom_free_shared_memory, (const char* name), {
+ATOM_JS_ASYNC(void, atom_free_shared_memory, (const char* name), {
 	if (name == NULL) {
 		return;
 	}
@@ -1914,7 +2187,7 @@ ATOM_JS(void, atom_free_shared_memory, (const char* name), {
 	await atom_free_shared_memory(name);
 });
 
-ATOM_JS(ATOM_POINTER, atom_get_shared_memory, (const char* name), {
+ATOM_JS_ASYNC(ATOM_POINTER, atom_get_shared_memory, (const char* name), {
 	if (name == NULL) {
 		return;
 	}
@@ -1924,7 +2197,7 @@ ATOM_JS(ATOM_POINTER, atom_get_shared_memory, (const char* name), {
 	return await atom_get_shared_memory(name);
 });
 
-ATOM_JS(void, atom_update_shared_memory, (const char* name, const char* process), {
+ATOM_JS_ASYNC(void, atom_update_shared_memory, (const char* name, const char* process), {
 	if (name == NULL) {
 		return;
 	}
@@ -1935,7 +2208,7 @@ ATOM_JS(void, atom_update_shared_memory, (const char* name, const char* process)
 	await atom_update_shared_memory(name, process);
 });
 
-ATOM_JS(void, atom_update_main_shared_memory, (const char* name), {
+ATOM_JS_ASYNC(void, atom_update_main_shared_memory, (const char* name), {
 	if (name == NULL) {
 		return;
 	}
@@ -2096,7 +2369,7 @@ void atom_add_event_listener(const char* eventName, ATOM_EVENT_HANDLER handler) 
 		const functionName = UTF8ToString($0);
 		const eventName = UTF8ToString($1);
 
-		const handler = atom_get_function(functionName);
+		const handler = atom_get_function(functionName, "asm");
 		if (handler) {
 			self.addEventListener(eventName, event => {
 				handler(Emval.toHandle(event));
@@ -2134,7 +2407,7 @@ void atom_add_event_listener(ATOM_ELEMENT_REFERENCE element, const char* eventNa
 				return;
 			}
 
-			const handler = atom_get_function(functionName);
+			const handler = atom_get_function(functionName, "asm");
 			if (handler) {
 				element.addEventListener(eventName, event => {
 					handler(Emval.toHandle(event));

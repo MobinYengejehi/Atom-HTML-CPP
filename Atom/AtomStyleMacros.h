@@ -16,19 +16,21 @@
 #define ATOM_STYLE_MACROS_HEADER
 
 #include <string>
-#include "AtomStyleManager.h"
 
-#define Css(content) std::string(#content)
+#include "AtomStyleManager.h"
+#include "AtomUtils.h"
+
+#define Css(...) ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ",")
 
 #define CssStyleSheet AtomCssStyleProperties() = 
 
-#define Query(...) AtomElementStyleQuery(#__VA_ARGS__) = 
+#define Query(...) AtomElementStyleQuery(ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ",")) = 
 #define SQuery(queryString) AtomElementStyleQuery(queryString) = 
 
-#define Rule(...) AtomElementStyleRule(#__VA_ARGS__) = 
+#define Rule(...) AtomElementStyleRule(ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ",")) = 
 #define SRule(ruleString) AtomElementStyleRule(ruleString) = 
 
-#define CssProperty(...) AtomElementStyleProperty(#__VA_ARGS__, false)
+#define CssProperty(...) AtomElementStyleProperty(ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ","), false)
 #define SCssProperty(propString) AtomElementStyleProperty(propString, false)
 
 #endif

@@ -17,8 +17,10 @@
 
 #include "AtomElementOptions.h"
 
-#define Element AtomElement("", false, true) = 
+#define Element AtomElement("", false, true, false) = 
+#define SvgElement AtomElement("", "http://www.w3.org/2000/svg", false, true, false) = 
 
+#define Namespace AtomElementOptionNamespace() = 
 #define Node AtomElementOptionNodeName() = 
 
 #define Id AtomElementOptionId() = 
@@ -40,9 +42,29 @@
 
 #define InnerContent AtomElementOptionInnerHTML() = 
 
-#define BreakLine Element{ Node "br" }
+#define BreakLine Element { Node "br" }
 
 #define Style AtomElementStylePropertyList() = 
+
+#define Src AtomElementOptionAttribute("src", false) = 
+#define Href AtomElementOptionAttribute("href", false) = 
+#define Type AtomElementOptionAttribute("type", false) = 
+#define Alt AtomElementOptionAttribute("alt", false) = 
+#define Name AtomElementOptionAttribute("name", false) = 
+#define Target AtomElementOptionAttribute("target", false) = 
+#define PlaceHolder AtomElementOptionAttribute("placeholder", false) = 
+#define AutoComplete AtomElementOptionAttribute("autocomplete", false) = 
+#define AutoCapitalize AtomElementOptionAttribute("autocapitalize", false) = 
+#define Align AtomElementOptionAttribute("align", false) = 
+#define Value AtomElementOptionAttribute("value", false) = 
+
+#define SvgViewBox AtomElementOptionAttribute("viewBox", false) = 
+#define SvgWidth AtomElementOptionAttribute("width", false) = 
+#define SvgHeight AtomElementOptionAttribute("height", false) = 
+#define SvgFill AtomElementOptionAttribute("fill", false) = 
+#define SvgStroke AtomElementOptionAttribute("stroke", false) = 
+#define SvgXmlNs AtomElementOptionAttribute("xmlns", false) = 
+#define SvgD AtomElementOptionAttribute("d", false) = 
 
 // Events
 #define OnAbort AtomElementOptionEvent("abort") = 

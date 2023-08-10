@@ -211,6 +211,18 @@ AtomElementOptionInnerHTML& AtomElementOptionInnerHTML::operator=(const std::str
 	return *this;
 }
 
+AtomElementOptionNamespace& AtomElementOptionNamespace::operator=(const AtomElementOptionNamespace& Namespace) {
+	value = Namespace.value;
+
+	return *this;
+}
+
+AtomElementOptionNamespace& AtomElementOptionNamespace::operator=(const std::string& v) {
+	value = v;
+
+	return *this;
+}
+
 AtomElementOptionType AtomGetElementOptionType(const AtomElementOption& option) {
 	if (std::holds_alternative<AtomElement>(option)) {
 		return AtomElementOptionType::Element;
@@ -240,6 +252,8 @@ AtomElementOptionType AtomGetElementOptionType(const AtomElementOption& option) 
 		return AtomElementOptionType::InnerHTML;
 	}else if (std::holds_alternative<AtomElementStylePropertyList>(option)) {
 		return AtomElementOptionType::Style;
+	}else if (std::holds_alternative<AtomElementOptionNamespace>(option)) {
+		return AtomElementOptionType::Namespace;
 	}
 
 	return AtomElementOptionType::Unknown;

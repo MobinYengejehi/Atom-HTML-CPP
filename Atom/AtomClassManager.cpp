@@ -97,6 +97,19 @@ void AtomClassManager::RemoveClass(const std::string& className) {
 	atom_remove_element_class(reference, className.c_str());
 }
 
+void AtomClassManager::ToggleClass(const std::string& className) {
+	if (className.empty()) {
+		return;
+	}
+
+	if (Contains(className)) {
+		RemoveClass(className);
+		return;
+	}
+
+	AddClass(className);
+}
+
 void AtomClassManager::SetClassName(const std::string& className) {
 	if (className.empty()) {
 		return;
