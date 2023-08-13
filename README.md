@@ -222,10 +222,14 @@ emcc -lembind -s ASYNCIFY -s EXIT_RUNTIME=1 -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_ME
 4. Create a `Cmake Project` in visual studio
 5. Add `Emscripten Cmake Toolchain` to your cmake project which located on `[emscripten_sdk installed directory]/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake`
 6. Add `Atom Library` to your project (Don't forget to add files to `CMakeLists.txt` file!)
-7. Build your project
-8. Open the `out` folder
-9. You will see `.js` and `.js.map` files
-10. Create a HTML file and use them on it
+7. Delete `CMakePresets.json` file
+8. Click on `Project` on the top left on toolbar
+9. Click on `CMakeSettings.json` and it will create the file
+10. Copy the content of given `CMakeSettings.json` file below
+11. Build your project
+12. Open the `out` folder
+13. You will see `.js` and `.js.map` files
+14. Create a HTML file and use them on it
 
 Note : Your `CMakeSettings.json` file should look like : (if you installed `Emscripten SDK` on `C:\emsdk`)
 
