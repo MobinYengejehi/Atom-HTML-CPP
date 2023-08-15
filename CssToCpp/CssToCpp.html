@@ -1,0 +1,349 @@
+<!-- 
+/*****************************************************************************
+ *
+ *  PROJECT:     Atom HTML Graphics Library for `C & CPP`
+ *               (https://github.com/MobinYengejehi/Atom-HTML-CPP)
+ *  LICENSE:     See LICENSE in the top level directory
+ *  FILE:        CssToCpp.html
+ * 
+ *  AUTHOR:      MobinYengejehi
+ *  GITHUB:      https://github.com/MobinYengejehi
+ *
+ *****************************************************************************/
+-->
+
+<html>
+    <head>
+        <meta charset="UTF8">
+        <style>
+            body{
+                display: flex;
+                flex-flow: column;
+            }
+            
+            body *{
+                margin-bottom: 20px;
+            }
+
+            body input {
+                max-width: 80px;
+            }
+            
+            body textarea {
+                min-height: 270px;
+            }
+        </style>
+    </head>
+    <body>
+        indent count = <input id="indent" type="number" placeholder="indent">
+        use property name = <input id="pname" type="text" placeholder="use property name (yes/no)">
+        <textarea id="css_code" placeholder="Css Code" cols="30" rows="10"></textarea>
+        <textarea id="cpp_code" placeholder="Cpp Code" cols="30" rows="10"></textarea>
+        <script>
+            const indentInput = document.querySelector("#indent");
+            const pnameInput = document.querySelector("#pname");
+
+            indentInput.value = 4; // default value
+            pnameInput.value = "no"; // default value
+
+            const cssCodeArea = document.querySelector("#css_code");
+            const cppCodeArea = document.querySelector("#cpp_code");
+
+            const CssRuleOpen = "{";
+            const CssRuleClose = "}";
+            const CssPropertyOpen = ":";
+            const CssPropertyClose = ";";
+            const CssSpecialRule = "@";
+            const CssString1 = '"';
+            const CssString2 = "'";
+
+            const CppRule = "Rule";
+            const CppQuery = "Query";
+            const CppCssProperty = "CssProperty";
+            const CppCssValue = "Css";
+            const CppParenthesisOpen = "(";
+            const CppParenthesisClose = ")";
+            const CppScopeOpen = "{";
+            const CppScopeClose = "}";
+            const CppCama = ",";
+            const CppSpace = " ";
+            const CppNextLine = "\n";
+            const CppEquilSyntax = "=";
+
+            function CaptilizeWord(word) {
+                if (!word || word.length < 1) {
+                    return;
+                }
+
+                var result = "";
+
+                for (var part of word.split("-")) {
+                    var byte = part[0].toUpperCase();
+                    result += byte + part.substring(1);
+                }
+
+                return result;
+            }
+
+            function OnCodeChange() {
+                var cssCode = cssCodeArea.value;
+                var cssCodeLength = cssCode.length;
+
+                if (cssCodeLength < 1) {
+                    return;
+                }
+
+                const rules = [];
+
+                ExtractCss : {
+                    var mainRule = { name : null, queries : [] };
+                    rules.push(mainRule);
+
+                    var   ruleName = "";
+                    var   query = "";
+                    var   property = "";
+                    var   propertyValue = "";
+                    var   properties = [];
+
+                    var workingRule = mainRule;
+
+                    var isSpecialRule = false;
+                    var isInsideSpecialRule = false;
+                    var isInsideRule = false;
+                    var isInsideProperty = false;
+                    var isInsideString = false;
+
+                    var stringBracket = "";
+                    
+                    for (var i = 0; i < cssCodeLength; i++) {
+                        const byte = cssCode[i];
+                        
+                        if (isInsideProperty) {
+                            if (isInsideString) {
+                                if (byte == stringBracket) {
+                                    isInsideString = false;
+                                    stringBracket = "";
+                                }
+
+                                propertyValue += byte;
+                                
+                                continue;
+                            }
+
+                            if (byte == CssPropertyClose) {
+                                isInsideProperty = false;
+
+                                properties.push({ property : property.trim(), propertyValue : propertyValue.trim() });
+
+                                property = "";
+                                propertyValue = "";
+
+                                continue;
+                            }
+
+                            if (byte == CssString1 || byte == CssString2) {
+                                isInsideString = true;
+                                stringBracket = byte;
+                            }
+
+                            propertyValue += byte;
+
+                            continue;
+                        }
+
+                        if (isInsideRule) {
+                            if (byte == CssRuleClose) {
+                                workingRule.queries.push({ query : query.trim(), properties });
+
+                                query = "";
+                                property = "";
+                                propertyValue = "";
+                                properties = [];
+
+                                isInsideRule = false;
+
+                                continue;
+                            }
+
+                            if (byte == CssPropertyOpen) {
+                                isInsideProperty = true;
+                                continue;
+                            }
+
+                            property += byte;
+
+                            continue;
+                        }
+
+                        if (isInsideSpecialRule) {
+                            if (byte == CssRuleClose) {
+                                isInsideSpecialRule = false;
+                                isSpecialRule = false;
+
+                                workingRule.name = ruleName;
+                                ruleName = "";
+
+                                workingRule = mainRule;
+
+                                continue;
+                            }
+
+                            if (byte == CssRuleOpen) {
+                                isInsideRule = true;
+                                continue;
+                            }
+
+                            query += byte;
+                            
+                            continue;
+                        }
+                        
+                        if (byte == CssSpecialRule) {
+                            isSpecialRule = true;
+
+                            var rule = { name : null, queries : [] };
+                            rules.push(rule);
+
+                            workingRule = rule;
+
+                            query += byte;
+
+                            continue;
+                        }
+
+                        if (byte == CssRuleOpen) {
+                            if (isSpecialRule) {
+                                isInsideSpecialRule = true;
+
+                                ruleName = query.trim();
+                                query = "";
+
+                                continue;
+                            }
+
+                            isInsideRule = true;
+
+                            continue;
+                        }
+
+                        query += byte;
+                    }
+                };
+
+                var cppCode = "";
+
+                ConvertToCpp : {
+                    var space = CppSpace;
+                    var nextLine = CppNextLine;
+
+                    var indentCountValue = parseInt(indentInput.value);
+
+                    if (indentCountValue < 1) {
+                        space = "";
+                        nextLine = "";
+                    }
+
+                    var indent = space.repeat(indentCountValue);
+
+                    var isUsingPropertyName = pnameInput.value == "yes" ? true : false;
+
+                    for (const rule of rules) {
+                        var ruleName = rule.name;
+
+                        var isRuleName = ruleName && ruleName.length > 0;
+
+                        if (isRuleName) {
+                            cppCode += CppRule;
+                            cppCode += CppParenthesisOpen;
+                            cppCode += ruleName;
+                            cppCode += CppParenthesisClose;
+
+                            cppCode += space;
+
+                            cppCode += CppScopeOpen;
+                            cppCode += nextLine;
+                        }
+
+                        for (const query of rule.queries) {
+                            if (isRuleName) {
+                                cppCode += indent;
+                            }
+
+                            cppCode += CppQuery;
+                            cppCode += CppParenthesisOpen;
+                            cppCode += query.query.split(CppNextLine).join("");
+                            cppCode += CppParenthesisClose;
+
+                            cppCode += space;
+
+                            cppCode += CppScopeOpen;
+                            cppCode += nextLine;
+                            
+                            for (var property of query.properties) {
+                                cppCode += indent.repeat(isRuleName ? 2 : 1);
+
+                                var propertyName = property.property;
+
+                                if (isUsingPropertyName && !propertyName.startsWith("--")) {
+                                    cppCode += CaptilizeWord(property.property);
+                                }else{
+                                    cppCode += CppCssProperty;
+                                    cppCode += CppParenthesisOpen;
+                                    cppCode += property.property;
+                                    cppCode += CppParenthesisClose;
+                                }
+
+                                cppCode += space;
+                                cppCode += CppEquilSyntax;
+                                cppCode += space;
+
+                                cppCode += CppCssValue;
+                                cppCode += CppParenthesisOpen;
+                                cppCode += property.propertyValue;
+                                cppCode += CppParenthesisClose;
+
+                                cppCode += CppCama;
+                                cppCode += nextLine;
+                            }
+
+                            cppCode = cppCode.substring(0, cppCode.length - CppCama.length - nextLine.length);
+
+                            cppCode += nextLine;
+
+                            if (isRuleName) {
+                                cppCode += indent;
+                            }
+
+                            cppCode += CppScopeClose;
+                            cppCode += CppCama;
+                            cppCode += nextLine;
+                            cppCode += nextLine;
+                        }
+
+                        if (isRuleName) {
+                            cppCode = cppCode.substring(0, cppCode.length - CppCama.length - nextLine.length*2);
+
+                            cppCode += nextLine;
+
+                            cppCode += CppScopeClose;
+                            cppCode += CppCama;
+                            cppCode += nextLine;
+                            cppCode += nextLine;
+                        }
+                    }
+
+                    cppCode = cppCode.substring(0, cppCode.length - CppCama.length - nextLine.length*2);
+                };
+
+                cppCodeArea.value = cppCode;
+            }
+            
+            indentInput.addEventListener("input", OnCodeChange);
+            indentInput.addEventListener("propertychange", OnCodeChange);
+            pnameInput.addEventListener("input", OnCodeChange);
+            pnameInput.addEventListener("propertychange", OnCodeChange);
+            cssCodeArea.addEventListener("input", OnCodeChange);
+            cssCodeArea.addEventListener("propertychange", OnCodeChange);
+        </script>
+    </body>
+</html>

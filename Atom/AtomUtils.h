@@ -22,4 +22,9 @@ std::string ConcatStringList(const std::vector<std::string>& list, const std::st
 
 std::string TrimString(const std::string& content);
 
+void SplitString(const std::string& str, const std::string& with, std::vector<std::string>* list);
+
+size_t GetStringSectionCount(const std::string& str, const std::string& with);
+long FindStringSection(const std::string& str, const std::string& what, size_t where = 0);
+
 #endif

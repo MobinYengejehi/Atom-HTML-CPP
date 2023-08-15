@@ -261,6 +261,10 @@ void AtomElement::GetParent(AtomElement* parentElement) {
 	parentElement->TakeOwnership(parent);
 }
 
+size_t AtomElement::GetChildCount() {
+	return atom_get_element_child_count(reference);
+}
+
 void AtomElement::QuerySelector(const std::string& query, AtomElement* element) {
 	if (query.empty()) {
 		return;
@@ -296,7 +300,7 @@ void AtomElement::QuerySelectorAll(const std::string& query, AtomElementList* el
 	}
 
 	for (const ATOM_ELEMENT_REFERENCE& element : list) {
-		elementList->push_back(AtomElement(element));
+		elementList->push_back(AtomElement(element, false, true));
 	}
 }
 
@@ -356,6 +360,18 @@ AtomElement AtomElement::RemovableCopy() {
 	return copy;
 }
 
+ATOM_ELEMENT_REFERENCE AtomElement::CloneReference() {
+	return (ATOM_ELEMENT_REFERENCE)ATOM_DIRECT_ASM({
+		const element = atom_get_element_by_reference($0);
+		
+		if (!element) {
+			return NULL;
+		}
+
+		return atom_create_element_reference(element);
+	}, reference);
+}
+
 void AtomElement::TakeOwnership(const ATOM_ELEMENT_REFERENCE& elementReference) {
 	reference = elementReference;
 	
@@ -384,6 +400,15 @@ void AtomElement::Clear() {
 
 		element.innerHTML = "";
 	}, reference);
+}
+
+void AtomElement::ScrollToView(std::string viewType) {
+	if (viewType.empty()) {
+		atom_scroll_to_element(reference);
+		return;
+	}
+
+	atom_scroll_to_element(reference, viewType.c_str());
 }
 
 void AtomElement::AddEvent(const std::string& eventName, ATOM_EVENT_HANDLER handler) {
@@ -417,6 +442,8 @@ void AtomElement::ApplyOption(const AtomElementOption& option) {
 		for (const AtomElement& child : children) {
 			AppendChild(child);
 		}
+
+		AtomFreeElementList(children);
 	}else if (type == AtomElementOptionType::NodeName) {
 		AtomElementOptionNodeName nodeNameOption = AtomGetElementOption<AtomElementOptionNodeName>(option);
 			
@@ -568,4 +595,14 @@ AtomElement AtomGetElementFromJS(ATOM_JS_VARIABLE val) {
 	}
 
 	return ATOM_JS_VARIABLE::global(NULL).call<ATOM_ELEMENT_REFERENCE>("atom_create_element_reference", val);
+}
+
+void AtomFreeElementList(const AtomElementList& elements) {
+	if (elements.empty()) {
+		return;
+	}
+
+	for (const AtomElement& element : elements) {
+		atom_free_element(element.GetHandle());
+	}
 }

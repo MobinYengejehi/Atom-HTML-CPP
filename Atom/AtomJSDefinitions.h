@@ -39,10 +39,15 @@
 #define ATOM_AS(variable) .as<variable>()
 #define ATOM_AS_STRING ATOM_AS(std::string)
 #define ATOM_AS_CSTRING ATOM_AS(char*)
+#define ATOM_AS_CHAR ATOM_AS(char)
+#define ATOM_AS_UCHAR ATOM_AS(ATOM_BYTE)
+#define ATOM_AS_BYTE ATOM_AS_UCHAR
 #define ATOM_AS_POINTER ATOM_AS(void*)
 #define ATOM_AS_INT ATOM_AS(int)
 #define ATOM_AS_FLOAT ATOM_AS(float)
 #define ATOM_AS_DOUBLE ATOM_AS(double)
+#define ATOM_AS_SHORT ATOM_AS(short)
+#define ATOM_AS_USHORT ATOM_AS(unsigned short)
 #define ATOM_AS_LONG ATOM_AS(long)
 #define ATOM_AS_LONGLONG ATOM_AS(long long)
 #define ATOM_AS_UINT ATOM_AS(unsigned int)
@@ -50,6 +55,7 @@
 #define ATOM_AS_ULONGLONG ATOM_AS(unsigned long long)
 #define ATOM_AS_UNSIGNED ATOM_AS(unsigned)
 #define ATOM_AS_ELEMENT ATOM_AS(ATOM_ELEMENT_REFERENCE)
+#define ATOM_AS_BOOL ATOM_AS(bool)
 
 #define ATOM_STRING std::string() =
 
@@ -62,6 +68,8 @@
 
 #define ATOM_SHARED_FUNCTION_TYPE(type, ...) typedef ATOM_SHARED_FUNCTION_RETURN (*type)(__VA_ARGS__)
 #define ATOM_SHARED_FUNCTION(...) [](__VA_ARGS__) -> ATOM_SHARED_FUNCTION_RETURN
+
+typedef unsigned char ATOM_BYTE;
 
 typedef unsigned long long ATOM_TICK;
 
@@ -128,6 +136,8 @@ ATOM_JS_DEFINITION bool                   atom_element_class_exists(ATOM_ELEMENT
 ATOM_JS_DEFINITION void                   atom_remove_element_class(ATOM_ELEMENT_REFERENCE element, const char* className);
 ATOM_JS_DEFINITION char*                  atom_get_element_node_name(ATOM_ELEMENT_REFERENCE element);
 ATOM_JS_DEFINITION ATOM_ELEMENT_REFERENCE atom_get_element_parent(ATOM_ELEMENT_REFERENCE element);
+ATOM_JS_DEFINITION size_t                 atom_get_element_child_count(ATOM_ELEMENT_REFERENCE element);
+ATOM_JS_DEFINITION void                   atom_scroll_to_element(ATOM_ELEMENT_REFERENCE element, const char* viewType = NULL);
 
 ATOM_JS_DEFINITION bool          atom_is_function_registered(const char* name);
 ATOM_JS_DEFINITION void          atom_unregister_function(const char* name);

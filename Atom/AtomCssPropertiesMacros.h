@@ -17,9 +17,6 @@
 
 #include "AtomStyleMacros.h"
 
-
-//#define CssProperty(...) AtomElementStyleProperty(ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ","), false)
-
 #define AccentColor AtomElementStyleProperty("accent-color", false)
 
 #define AlignContent AtomElementStyleProperty("align-content", false)
@@ -470,8 +467,8 @@
 #define $Import(...) AtomElementStyleRule(std::string("@import ") + ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ",")) = 
 #define $SImport(content) AtomElementStyleRule(std::string("@import ") + content) = 
 
-#define $KeyFrames(...) AtomElementStyleRule(std::string("@keyframes ") + ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ",")) = 
-#define $SKeyFrames(content) AtomElementStyleRule(std::string("@keyframes ") + content) = 
+#define $Keyframes(...) AtomElementStyleRule(std::string("@keyframes ") + ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ",")) = 
+#define $SKeyframes(content) AtomElementStyleRule(std::string("@keyframes ") + content) = 
 
 #define $Media(...) AtomElementStyleRule(std::string("@media ") + ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ",")) = 
 #define $SMedia(content) AtomElementStyleRule(std::string("@media ") + content) = 
@@ -485,7 +482,7 @@
 #define $Supports(...) AtomElementStyleRule(std::string("@supports ") + ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ",")) = 
 #define $SSupports(content) AtomElementStyleRule(std::string("@supports ") + content) = 
 
-#define $ViewPort(...) AtomElementStyleRule(std::string("@viewport ") + ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ",")) = 
-#define $SViewPort(content) AtomElementStyleRule(std::string("@viewport ") + content) = 
+#define $Viewport(...) AtomElementStyleRule(std::string("@viewport ") + ConcatStringList(std::vector<std::string>{ #__VA_ARGS__ }, ",")) = 
+#define $SViewport(content) AtomElementStyleRule(std::string("@viewport ") + content) = 
 
 #endif

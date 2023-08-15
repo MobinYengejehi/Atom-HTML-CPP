@@ -55,6 +55,7 @@ public:
 	AtomClassManager&      GetClassManager();
 	AtomStyleManager&      GetStyleManager();
 	void                   GetParent(AtomElement* parent);
+	size_t                 GetChildCount();
 
 	void QuerySelector(const std::string& query , AtomElement* element);
 	void QuerySelectorAll(const std::string& query, AtomElementList* elementList);
@@ -68,11 +69,15 @@ public:
 	void SetLastUseState(const bool& use);
 	AtomElement RemovableCopy();
 
+	ATOM_ELEMENT_REFERENCE CloneReference();
+
 	void TakeOwnership(const ATOM_ELEMENT_REFERENCE& elementReference);
 	void TakeOwnership(const AtomElement& element);
 
 	void Destroy();
 	void Clear();
+
+	void ScrollToView(std::string viewType = std::string());
 
 	void AddEvent(const std::string& eventName, ATOM_EVENT_HANDLER handler);
 
@@ -111,5 +116,7 @@ AtomElement AtomGetDocumentHeadElement();
 AtomElement AtomGetDocumentBodyElement();
 
 AtomElement AtomGetElementFromJS(ATOM_JS_VARIABLE val);
+
+void AtomFreeElementList(const AtomElementList& elements);
 
 #endif

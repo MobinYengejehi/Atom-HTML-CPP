@@ -258,7 +258,13 @@ ATOM_JS(void, atom_application_init, (), {
 
 		element = Module.AtomElements[element];
 		if (element) {
-			return element[property];
+			var prop = element[property];
+			
+			if (typeof prop == "string") {
+				return prop;
+			}
+
+			return prop.toString();
 		}
 	}
 
@@ -431,6 +437,32 @@ ATOM_JS(void, atom_application_init, (), {
 
 			return self.atom_create_element_reference(parent);
 		}
+	}
+
+	function atom_get_element_child_count(element) {
+		if (!self.atom_element_exists(element)) {
+			return 0;
+		}
+
+		element = Module.AtomElements[element];
+		if (!element) {
+			return 0;
+		}
+
+		return element.childElementCount;
+	}
+
+	function atom_scroll_to_element(element, viewType) {
+		if (!self.atom_element_exists(element)) {
+			return;
+		}
+
+		element = Module.AtomElements[element];
+		if (!element) {
+			return;
+		}
+
+		element.scrollIntoView(viewType);
 	}
 
 	function atom_add_event_listener(element, eventName, handler) {
@@ -1366,6 +1398,8 @@ ATOM_JS(void, atom_application_init, (), {
 	self.atom_remove_element_class = CreateInternalSharedFunction(atom_remove_element_class);
 	self.atom_get_element_node_name = CreateInternalSharedFunction(atom_get_element_node_name);
 	self.atom_get_element_parent = CreateInternalSharedFunction(atom_get_element_parent);
+	self.atom_get_element_child_count = CreateInternalSharedFunction(atom_get_element_child_count);
+	self.atom_scroll_to_element = CreateInternalSharedFunction(atom_scroll_to_element);
 	self.atom_add_event_listener = atom_add_event_listener;
 	self.atom_set_temp_value = atom_set_temp_value;
 	self.atom_register_function = atom_register_function;
@@ -1689,6 +1723,21 @@ ATOM_JS_ASYNC(ATOM_ELEMENT_REFERENCE, atom_get_element_parent, (ATOM_ELEMENT_REF
 	return await atom_get_element_parent(element);
 });
 
+ATOM_JS_ASYNC(size_t, atom_get_element_child_count, (ATOM_ELEMENT_REFERENCE element), {
+	return await atom_get_element_child_count(element);
+});
+
+ATOM_JS_ASYNC(void, atom_scroll_to_element, (ATOM_ELEMENT_REFERENCE element, const char* viewType), {
+	if (!viewType == NULL) {
+		viewType = UTF8ToString(viewType);
+		atom_scroll_to_element(element, viewType);
+
+		return;
+	}
+
+	await atom_scroll_to_element(element);
+})
+
 #else
 
 ATOM_JS(ATOM_ELEMENT_REFERENCE, atom_create_element, (const char* type, const char* Namespace), {
@@ -1932,6 +1981,21 @@ ATOM_JS(char*, atom_get_element_node_name, (ATOM_ELEMENT_REFERENCE element), {
 
 ATOM_JS(ATOM_ELEMENT_REFERENCE, atom_get_element_parent, (ATOM_ELEMENT_REFERENCE element), {
 	return atom_get_element_parent(element);
+});
+
+ATOM_JS(size_t, atom_get_element_child_count, (ATOM_ELEMENT_REFERENCE element), {
+	return atom_get_element_child_count(element);
+});
+
+ATOM_JS(void, atom_scroll_to_element, (ATOM_ELEMENT_REFERENCE element, const char* viewType), {
+	if (!viewType == NULL) {
+		viewType = UTF8ToString(viewType);
+		atom_scroll_to_element(element, viewType);
+		
+		return;
+	}
+
+	atom_scroll_to_element(element);
 });
 
 #endif
