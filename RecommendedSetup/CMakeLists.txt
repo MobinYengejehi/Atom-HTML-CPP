@@ -17,11 +17,7 @@ file(GLOB PROJECT_SOURCES
 	./*.cpp
 )
 
-#if (ATOM_SYSTEM_OS_WINDOWS)
-	#add_executable(Atom3D ${PROJECT_SOURCES})
-#else()
-	add_executable(Atom3D ${PROJECT_SOURCES} ${ATOM_LIB_HEADERS} ${ATOM_LIB_SOURCES})
-#endif()
+add_executable(Atom3D ${PROJECT_SOURCES} ${ATOM_LIB_HEADERS} ${ATOM_LIB_SOURCES})
 
 if (DEFINED ATOM_EXTERNAL_LIB_LINKER)
 	target_link_libraries(Atom3D ${OPENGL_LIBRARY} ${ATOM_EXTERNAL_LIB_LINKER})
