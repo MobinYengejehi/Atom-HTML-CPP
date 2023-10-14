@@ -15,7 +15,7 @@
 #ifndef ATOM_STYLE_MANAGER
 #define ATOM_STYLE_MANAGER
 
-#include "AtomJSDefinitions.h"
+#include "AtomCAPI.h"
 
 #include <string>
 #include <vector>
@@ -99,7 +99,7 @@ public:
 	void ApplyProperty(const AtomElementStyleProperty& prop);
 	void ApplyProperties(const AtomElementStylePropertyList& props);
 
-	std::string operator[](const std::string& propertyName);
+	std::string operator[](const char* propertyName);
 
 	operator bool();
 

@@ -293,14 +293,15 @@ void AtomElement::QuerySelectorAll(const std::string& query, AtomElementList* el
 		return;
 	}
 
-	ATOM_ELEMENT_REFERENCE_LIST list = atom_query_selector_all(reference, query.c_str());
+	Auint32 length;
+	ATOM_ELEMENT_REFERENCE_LIST list = atom_query_selector_all(reference, query.c_str(), &length);
 
-	if (list.empty()) {
+	if (length < 1) {
 		return;
 	}
 
-	for (const ATOM_ELEMENT_REFERENCE& element : list) {
-		elementList->push_back(AtomElement(element, false, true));
+	for (Auint32 i = 0; i < length; i++) {
+		elementList->push_back(AtomElement(list[i], false, true));
 	}
 }
 
@@ -361,15 +362,47 @@ AtomElement AtomElement::RemovableCopy() {
 }
 
 ATOM_ELEMENT_REFERENCE AtomElement::CloneReference() {
+#if ATOM_SYSTEM_OS_WASM
 	return (ATOM_ELEMENT_REFERENCE)ATOM_DIRECT_ASM({
-		const element = atom_get_element_by_reference($0);
+		const element = Atom.atom_get_element_by_reference($0);
 		
 		if (!element) {
 			return NULL;
 		}
 
-		return atom_create_element_reference(element);
+		return Atom.atom_create_element_reference(element);
 	}, reference);
+#else
+	return (ATOM_ELEMENT_REFERENCE)0;
+#endif
+}
+
+void AtomElement::FreeReference() {
+	atom_free_element(reference);
+}
+
+bool AtomElement::HasAttribute(const std::string& attribute) {
+	if (attribute.empty()) {
+		return false;
+	}
+
+	return atom_has_element_attribute(reference, attribute.c_str());
+}
+
+void AtomElement::RemoveAttribute(const std::string& attribute) {
+	if (attribute.empty()) {
+		return;
+	}
+
+	atom_remove_element_attribute(reference, attribute.c_str());
+}
+
+void AtomElement::ToggleAttribute(const std::string& attribute) {
+	if (attribute.empty()) {
+		return;
+	}
+
+	atom_toggle_element_attribute(reference, attribute.c_str());
 }
 
 void AtomElement::TakeOwnership(const ATOM_ELEMENT_REFERENCE& elementReference) {
@@ -390,16 +423,20 @@ void AtomElement::Destroy() {
 }
 
 void AtomElement::Clear() {
+#if ATOM_SYSTEM_OS_WASM
 	ATOM_DIRECT_ASM({
 		const reference = $0;
 
-		const element = atom_get_element_by_reference(reference);
+		const element = Atom.atom_get_element_by_reference(reference);
 		if (!element) {
 			return;
 		}
 
 		element.innerHTML = "";
+		element.textContent = "";
+		element.value = "";
 	}, reference);
+#endif
 }
 
 void AtomElement::ScrollToView(std::string viewType) {
@@ -426,24 +463,28 @@ void AtomElement::AddEvent(const std::string& eventName, ATOM_EVENT_HANDLER hand
 void AtomElement::ApplyOption(const AtomElementOption& option) {
 	AtomElementOptionType type = AtomGetElementOptionType(option);
 
-	if (type == AtomElementOptionType::Element) {
-		AtomElement child = AtomGetElementOption<AtomElement>(option);
+	if (type == AtomElementOptionType::Component) {
+		AtomComponent component = AtomGetElementOption<AtomComponent>(option);
 
-		AppendChild(child);
+		AtomElement compElement = ExtractElementFromComponent(component);
 
-		atom_free_element(child.GetHandle());
-	}else if (type == AtomElementOptionType::ElementList) {
-		AtomElementList children = AtomGetElementOption<AtomElementList>(option);
+		AppendChild(compElement);
 
-		if (children.empty()) {
+		atom_free_element(compElement.GetHandle());
+	}else if (type == AtomElementOptionType::ComponentList) {
+		AtomComponentList components = AtomGetElementOption<AtomComponentList>(option);
+
+		if (components.empty()) {
 			return;
 		}
 
-		for (const AtomElement& child : children) {
-			AppendChild(child);
-		}
+		for (AtomComponent& component : components) {
+			AtomElement compElement = ExtractElementFromComponent(component);
 
-		AtomFreeElementList(children);
+			AppendChild(compElement);
+
+			atom_free_element(compElement.GetHandle());
+		}
 	}else if (type == AtomElementOptionType::NodeName) {
 		AtomElementOptionNodeName nodeNameOption = AtomGetElementOption<AtomElementOptionNodeName>(option);
 			
@@ -512,6 +553,10 @@ void AtomElement::ApplyOption(const AtomElementOption& option) {
 		AtomElementOptionNamespace NamespaceO = AtomGetElementOption<AtomElementOptionNamespace>(option);
 
 		Namespace = NamespaceO.value;
+	}else if (type == AtomElementOptionType::UseRef) {
+		AtomElementOptionUseRef useRef = AtomGetElementOption<AtomElementOptionUseRef>(option);
+
+		UseReference(useRef.function);
 	}
 }
 
@@ -523,6 +568,14 @@ void AtomElement::ApplyOptions(const AtomElementOptions& options) {
 	for (const AtomElementOption& option : options) {
 		ApplyOption(option);
 	}
+}
+
+void AtomElement::UseReference(AtomElementUseRefFunction function) {
+	if (!function) {
+		return;
+	}
+
+	function(this);
 }
 
 bool AtomElement::IsLocked() const {
@@ -537,7 +590,7 @@ bool AtomElement::IsLastUsed() const {
 	return lastUse;
 }
 
-std::string AtomElement::operator[](const std::string& propertyName) const {
+std::string AtomElement::operator[](const char* propertyName) const {
 	return GetProperty(propertyName);
 }
 
@@ -571,11 +624,13 @@ AtomElement::operator bool() {
 	return reference == NULL ? false : atom_element_exists(reference);
 }
 
+#if ATOM_SYSTEM_OS_WASM
 AtomElement AtomGetDocumentElement() {
-	ATOM_ELEMENT_REFERENCE ref = atom_query_selector("html");
+	ATOM_ELEMENT_REFERENCE ref = atom_document_query_selector("html");
 
 	return AtomElement(ref);
 }
+#endif
 
 AtomElement AtomGetDocumentHeadElement() {
 	ATOM_ELEMENT_REFERENCE ref = atom_get_document_head();
@@ -589,13 +644,15 @@ AtomElement AtomGetDocumentBodyElement() {
 	return AtomElement(ref, false ,true);
 }
 
+#if ATOM_SYSTEM_OS_WASM
 AtomElement AtomGetElementFromJS(ATOM_JS_VARIABLE val) {
 	if (val.isNull()) {
 		return NULL;
 	}
 
-	return ATOM_JS_VARIABLE::global(NULL).call<ATOM_ELEMENT_REFERENCE>("atom_create_element_reference", val);
+	return ATOM_JS_VARIABLE::global("Atom").call<ATOM_ELEMENT_REFERENCE>("atom_create_element_reference", val);
 }
+#endif
 
 void AtomFreeElementList(const AtomElementList& elements) {
 	if (elements.empty()) {

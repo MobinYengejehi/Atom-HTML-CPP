@@ -15,7 +15,7 @@
 #ifndef ATOM_ELEMENT_HEADER
 #define ATOM_ELEMENT_HEADER
 
-#include "AtomJSDefinitions.h"
+#include "AtomCAPI.h"
 #include "AtomClassManager.h"
 #include "AtomStyleManager.h"
 #include "AtomElementOptions.h"
@@ -28,6 +28,8 @@
 class AtomElement;
 
 typedef std::vector<AtomElement> AtomElementList;
+
+typedef void (*AtomElementUseRefFunction)(AtomElement*);
 
 class AtomElement {
 public:
@@ -70,6 +72,11 @@ public:
 	AtomElement RemovableCopy();
 
 	ATOM_ELEMENT_REFERENCE CloneReference();
+	void                   FreeReference();
+
+	bool HasAttribute(const std::string& attribute);
+	void RemoveAttribute(const std::string& attribute);
+	void ToggleAttribute(const std::string& attribute);
 
 	void TakeOwnership(const ATOM_ELEMENT_REFERENCE& elementReference);
 	void TakeOwnership(const AtomElement& element);
@@ -84,11 +91,13 @@ public:
 	void ApplyOption(const AtomElementOption& option);
 	void ApplyOptions(const AtomElementOptions& options);
 
+	void UseReference(AtomElementUseRefFunction function);
+
 	bool IsLocked() const;
 	bool IsKeepingAliveReference() const;
 	bool IsLastUsed() const;
 
-	std::string  operator[](const std::string& propertyName) const;
+	std::string  operator[](const char* propertyName) const;
 	AtomElement& operator+=(const AtomElement& child);
 	bool         operator==(const AtomElement& target) const;
 	bool         operator==(const ATOM_ELEMENT_REFERENCE& target) const;
@@ -111,11 +120,15 @@ private:
 	AtomStyleManager styleManager;
 };
 
+#if ATOM_SYSTEM_OS_WASM
 AtomElement AtomGetDocumentElement();
+#endif
 AtomElement AtomGetDocumentHeadElement();
 AtomElement AtomGetDocumentBodyElement();
 
-AtomElement AtomGetElementFromJS(ATOM_JS_VARIABLE val);
+#if ATOM_SYSTEM_OS_WASM
+AtomElement AtomGetElementFromJS(ATOM_OBJECT val);
+#endif
 
 void AtomFreeElementList(const AtomElementList& elements);
 

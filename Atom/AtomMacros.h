@@ -19,6 +19,7 @@
 
 #define Element AtomElement("", false, true, false) = 
 #define SvgElement AtomElement("", "http://www.w3.org/2000/svg", false, true, false) = 
+#define NullElement AtomElement()
 
 #define Namespace AtomElementOptionNamespace() = 
 #define Node AtomElementOptionNodeName() = 
@@ -34,13 +35,15 @@
 #define Event AtomElementOptionEvent() = 
 
 #define Lockable AtomElementOptionLockable(true)
-#define KeepAlive AtomElementOptionKeepAlive(true)
+#define KeepElementAlive AtomElementOptionKeepAlive(true)
 #define SetLockable AtomElementOptionLockable() = 
 #define SetKeepAlive AtomElementOptionKeepAlive() = 
 
 #define ElementReference AtomElementOptionReference() = 
 
 #define InnerContent AtomElementOptionInnerHTML() = 
+
+#define UseRef AtomElementOptionUseRef() = 
 
 #define BreakLine Element { Node "br" }
 
@@ -63,6 +66,10 @@
 #define SvgHeight AtomElementOptionAttribute("height", false) = 
 #define SvgFill AtomElementOptionAttribute("fill", false) = 
 #define SvgStroke AtomElementOptionAttribute("stroke", false) = 
+#define SvgStrokeWidth AtomElementOptionAttribute("stroke-width", false) =
+#define SvgStrokeLinecap AtomElementOptionAttribute("stroke-linecap", false) =
+#define SvgStrokeLineJoin AtomElementOptionAttribute("stroke-linejoin", false) = 
+#define SvgOpacity AtomElementOptionAttribute("opacity", false) = 
 #define SvgXmlNs AtomElementOptionAttribute("xmlns", false) = 
 #define SvgD AtomElementOptionAttribute("d", false) = 
 

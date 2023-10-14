@@ -223,11 +223,23 @@ AtomElementOptionNamespace& AtomElementOptionNamespace::operator=(const std::str
 	return *this;
 }
 
+AtomElementOptionUseRef& AtomElementOptionUseRef::operator=(const AtomElementOptionUseRef& ref) {
+	function = ref.function;
+
+	return *this;
+}
+
+AtomElementOptionUseRef& AtomElementOptionUseRef::operator=(AtomElementUseRefFunctionOpiton func) {
+	function = func;
+
+	return *this;
+}
+
 AtomElementOptionType AtomGetElementOptionType(const AtomElementOption& option) {
-	if (std::holds_alternative<AtomElement>(option)) {
-		return AtomElementOptionType::Element;
-	}else if (std::holds_alternative<AtomElementList>(option)) {
-		return AtomElementOptionType::ElementList;
+	if (std::holds_alternative<AtomComponent>(option)) {
+		return AtomElementOptionType::Component;
+	}else if (std::holds_alternative<AtomComponentList>(option)) {
+		return AtomElementOptionType::ComponentList;
 	}else if (std::holds_alternative<AtomElementOptionNodeName>(option)) {
 		return AtomElementOptionType::NodeName;
 	}else if (std::holds_alternative<AtomElementOptionId>(option)) {
@@ -254,7 +266,25 @@ AtomElementOptionType AtomGetElementOptionType(const AtomElementOption& option) 
 		return AtomElementOptionType::Style;
 	}else if (std::holds_alternative<AtomElementOptionNamespace>(option)) {
 		return AtomElementOptionType::Namespace;
+	}else if (std::holds_alternative<AtomElementOptionUseRef>(option)) {
+		return AtomElementOptionType::UseRef;
 	}
 
 	return AtomElementOptionType::Unknown;
+}
+
+AtomElement ExtractElementFromComponent(const AtomComponent& component) {
+	if (std::holds_alternative<AtomElement>(component)) {
+		return AtomGetElementOption<AtomElement>(component);
+	}else if (std::holds_alternative<AtomElementComponent>(component)) {
+		AtomElementComponent buildComponent = AtomGetElementOption<AtomElementComponent>(component);
+
+		if (!buildComponent) {
+			return AtomElement();
+		}
+
+		return buildComponent();
+	}
+
+	return AtomElement();
 }

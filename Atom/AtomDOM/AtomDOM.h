@@ -3,8 +3,8 @@
  *  PROJECT:     Atom HTML Graphics Library for `C & CPP`
  *               (https://github.com/MobinYengejehi/Atom-HTML-CPP)
  *  LICENSE:     See LICENSE in the top level directory
- *  FILE:        Atom.h
- * 
+ *  FILE:        AtomDOM/AtomDOM.h
+ *
  *  AUTHOR:      MobinYengejehi
  *  GITHUB:      https://github.com/MobinYengejehi
  *
@@ -12,18 +12,18 @@
 
 #pragma once
 
-#ifndef ATOM_HEADER
-#define ATOM_HEADER
+#ifndef ATOM_DOM_HEADER
+#define ATOM_DOM_HEADER
 
-#include "AtomCAPI.h"
+#include "../AtomSystemDefinitions.h"
 
-#include "AtomClassManager.h"
-#include "AtomStyleManager.h"
+ATOM_C_ENV_OPEN
 
-#include "AtomElementOptions.h"
+ATOM_LIB_SHARE void atom_dom_init();
+ATOM_LIB_SHARE void atom_dom_uninit();
 
-#include "AtomElement.h"
+ATOM_LIB_SHARE void atom_dom_create_element(const char* type, const char* ns = NULL);
 
-#include "AtomUtils.h"
+ATOM_C_ENV_CLOSE
 
 #endif

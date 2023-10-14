@@ -15,7 +15,7 @@
 #ifndef ATOM_CLASS_MANAGER
 #define ATOM_CLASS_MANAGER
 
-#include "AtomJSDefinitions.h"
+#include "AtomCAPI.h"
 
 #include <string>
 #include <vector>

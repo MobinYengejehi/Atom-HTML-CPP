@@ -15,7 +15,7 @@
 #ifndef ATOM_ELEMENT_OPTIONS_HEADER
 #define ATOM_ELEMENT_OPTIONS_HEADER
 
-#include "AtomJSDefinitions.h"
+#include "AtomCAPI.h"
 #include "AtomStyleManager.h"
 
 #include <variant>
@@ -27,8 +27,8 @@ class AtomElement;
 #define AtomGetElementOption std::get
 
 #define ATOM_ELEMENT_OPTION std::variant< \
-                                AtomElement, \
-                                std::vector<AtomElement>, \
+								AtomComponent, \
+                                AtomComponentList, \
                                 AtomElementOptionNodeName, \
                                 AtomElementOptionId, \
                                 AtomElementOptionClassName, \
@@ -41,15 +41,21 @@ class AtomElement;
                                 AtomElementOptionReference, \
                                 AtomElementOptionInnerHTML, \
                                 AtomElementStylePropertyList, \
-                                AtomElementOptionNamespace \
+                                AtomElementOptionNamespace, \
+                                AtomElementOptionUseRef \
                             >
+
+typedef AtomElement (*AtomElementComponent)();
+typedef std::variant<AtomElement, AtomElementComponent> AtomComponent;
+typedef std::vector<AtomComponent> AtomComponentList;
+
+typedef void (*AtomElementUseRefFunctionOpiton)(AtomElement*);
 
 struct AtomElementOptionNodeName {
 	std::string value;
 
 	AtomElementOptionNodeName& operator=(const AtomElementOptionNodeName& option);
 	AtomElementOptionNodeName& operator=(const std::string& v);
-
 };
 
 struct AtomElementOptionId {
@@ -152,10 +158,17 @@ struct AtomElementOptionNamespace {
 	AtomElementOptionNamespace& operator=(const std::string& v);
 };
 
+struct AtomElementOptionUseRef {
+	AtomElementUseRefFunctionOpiton function;
+
+	AtomElementOptionUseRef& operator=(const AtomElementOptionUseRef& useRef);
+	AtomElementOptionUseRef& operator=(AtomElementUseRefFunctionOpiton func);
+};
+
 enum class AtomElementOptionType {
 	Unknown = 0,
-	Element = 1,
-	ElementList = 2,
+	Component = 1,
+	ComponentList = 2,
 	NodeName = 3,
 	Id = 4,
 	ClassName = 5,
@@ -168,12 +181,15 @@ enum class AtomElementOptionType {
 	Reference = 12,
 	InnerHTML = 13,
 	Style = 14,
-	Namespace = 15
+	Namespace = 15,
+	UseRef = 16
 };
 
 typedef ATOM_ELEMENT_OPTION AtomElementOption;
 typedef std::vector<AtomElementOption> AtomElementOptions;
 
 AtomElementOptionType AtomGetElementOptionType(const AtomElementOption& option);
+
+AtomElement ExtractElementFromComponent(const AtomComponent& component);
 
 #endif

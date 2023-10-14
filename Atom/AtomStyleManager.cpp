@@ -198,7 +198,7 @@ void AtomStyleManager::ApplyProperties(const AtomElementStylePropertyList& props
 	}
 }
 
-std::string AtomStyleManager::operator [](const std::string& propertyName) {
+std::string AtomStyleManager::operator [](const char* propertyName) {
 	return GetProperty(propertyName);
 }
 
